@@ -5,6 +5,10 @@
     "minimum-stability": "dev",
     "repositories": [
         {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        },
+        {
             "type": "package",
             "package": {
                 "name": "recurser/jquery-simple-color",
