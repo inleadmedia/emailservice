@@ -1,12 +1,8 @@
 {
-    "name": "emailservice/emailservice",
+    "name": "inlead/emailservice",
     "description": "D8 module for communication between subscribers and PeytzMail",
     "type": "drupal-custom-module",
     "minimum-stability": "dev",
-    "require": {
-        "drupal/admin_toolbar": "^1.25",
-        "drupal/color_field": "^2.0"
-    },
     "repositories": [
         {
             "type": "package",
@@ -32,5 +28,11 @@
                 }
             }
         }
-    ]
+    ],
+    "require": {
+        "drupal/admin_toolbar": "^1.25",
+        "drupal/color_field": "^2.0",
+        "recurser/jquery-simple-color": "v1.2.2",
+        "bgrins/spectrum": "1.8.0"
+    }
 }
