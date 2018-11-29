@@ -1,0 +1,35 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.subscription.field_buttons_color
+    - field.field.node.subscription.field_headline_color
+    - field.field.node.subscription.field_intro_text
+    - field.field.node.subscription.field_logo
+    - field.field.node.subscription.field_mailing_list_id
+    - field.field.node.subscription.field_preferences_set
+    - field.field.node.subscription.field_subscriber_email
+    - field.field.node.subscription.field_url_for_item_page
+    - node.type.subscription
+  module:
+    - user
+id: node.subscription.teaser
+targetEntityType: node
+bundle: subscription
+mode: teaser
+content:
+  links:
+    weight: 100
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+hidden:
+  field_buttons_color: true
+  field_headline_color: true
+  field_intro_text: true
+  field_logo: true
+  field_mailing_list_id: true
+  field_preferences_set: true
+  field_subscriber_email: true
+  field_url_for_item_page: true

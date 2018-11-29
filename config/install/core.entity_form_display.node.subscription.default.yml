@@ -1,0 +1,108 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.subscription.field_buttons_color
+    - field.field.node.subscription.field_headline_color
+    - field.field.node.subscription.field_intro_text
+    - field.field.node.subscription.field_logo
+    - field.field.node.subscription.field_mailing_list_id
+    - field.field.node.subscription.field_preferences_set
+    - field.field.node.subscription.field_subscriber_email
+    - field.field.node.subscription.field_url_for_item_page
+    - image.style.thumbnail
+    - node.type.subscription
+  module:
+    - color_field
+    - image
+id: node.subscription.default
+targetEntityType: node
+bundle: subscription
+mode: default
+content:
+  field_buttons_color:
+    weight: 4
+    settings:
+      show_input: ''
+      show_palette: ''
+      palette: ''
+      show_palette_only: ''
+      show_buttons: ''
+      allow_empty: ''
+    third_party_settings: {  }
+    type: color_field_widget_spectrum
+    region: content
+  field_headline_color:
+    weight: 3
+    settings:
+      show_input: ''
+      show_palette: ''
+      palette: ''
+      show_palette_only: ''
+      show_buttons: ''
+      allow_empty: ''
+    third_party_settings: {  }
+    type: color_field_widget_spectrum
+    region: content
+  field_intro_text:
+    weight: 1
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textarea
+    region: content
+  field_logo:
+    weight: 2
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
+    type: image_image
+    region: content
+  field_mailing_list_id:
+    weight: 6
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_preferences_set:
+    weight: 5
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_subscriber_email:
+    weight: 7
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: email_default
+    region: content
+  field_url_for_item_page:
+    weight: 8
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  title:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  path: true
+  promote: true
+  status: true
+  sticky: true
+  uid: true

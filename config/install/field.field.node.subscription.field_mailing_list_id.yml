@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_mailing_list_id
+    - node.type.subscription
+id: node.subscription.field_mailing_list_id
+field_name: field_mailing_list_id
+entity_type: node
+bundle: subscription
+label: 'Mailing list ID'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

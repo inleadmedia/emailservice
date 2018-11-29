@@ -1,0 +1,63 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.subscription.field_buttons_color
+    - field.field.node.subscription.field_headline_color
+    - field.field.node.subscription.field_intro_text
+    - field.field.node.subscription.field_logo
+    - field.field.node.subscription.field_mailing_list_id
+    - field.field.node.subscription.field_preferences_set
+    - field.field.node.subscription.field_subscriber_email
+    - field.field.node.subscription.field_url_for_item_page
+    - node.type.subscription
+  module:
+    - image
+    - user
+id: node.subscription.default
+targetEntityType: node
+bundle: subscription
+mode: default
+content:
+  field_intro_text:
+    weight: 2
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    type: basic_string
+    region: content
+  field_logo:
+    weight: 1
+    label: hidden
+    settings:
+      image_style: ''
+      image_link: ''
+    third_party_settings: {  }
+    type: image
+    region: content
+  field_preferences_set:
+    weight: 4
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_subscriber_email:
+    weight: 3
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: basic_string
+    region: content
+  links:
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  field_buttons_color: true
+  field_headline_color: true
+  field_mailing_list_id: true
+  field_url_for_item_page: true

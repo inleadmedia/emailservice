@@ -1,0 +1,36 @@
+{
+    "name": "emailservice/emailservice",
+    "description": "D8 module for communication between subscribers and PeytzMail",
+    "type": "drupal-custom-module",
+    "minimum-stability": "dev",
+    "require": {
+        "drupal/admin_toolbar": "^1.25",
+        "drupal/color_field": "^2.0"
+    },
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "recurser/jquery-simple-color",
+                "version": "v1.2.2",
+                "type": "drupal-library",
+                "dist": {
+                    "url": "https://github.com/recurser/jquery-simple-color/archive/v1.2.2.zip",
+                    "type": "zip"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "bgrins/spectrum",
+                "version": "1.8.0",
+                "type": "drupal-library",
+                "dist": {
+                    "url": "https://github.com/bgrins/spectrum/archive/1.8.0.zip",
+                    "type": "zip"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_url_for_item_page
+    - node.type.subscription
+id: node.subscription.field_url_for_item_page
+field_name: field_url_for_item_page
+entity_type: node
+bundle: subscription
+label: 'URL for item page'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
