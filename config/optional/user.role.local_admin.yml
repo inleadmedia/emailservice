@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies: {  }
+id: local_admin
+label: 'Local admin'
+weight: 3
+is_admin: null
+permissions:
+  - 'create subscription content'
+  - 'edit own subscription content'
