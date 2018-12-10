@@ -8,7 +8,6 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
-    - field.field.node.subscription.field_preferences_set
     - field.field.node.subscription.field_subscriber_email
     - field.field.node.subscription.field_url_for_item_page
     - node.type.subscription
@@ -30,6 +29,5 @@ hidden:
   field_intro_text: true
   field_logo: true
   field_mailing_list_id: true
-  field_preferences_set: true
   field_subscriber_email: true
   field_url_for_item_page: true

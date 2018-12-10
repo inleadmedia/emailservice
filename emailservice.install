@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * @file
+ */
+
+function emailservice_schema() {
+  $schema['emailservice_preferences_mapping'] = [
+    'description' => 'Base table for storing client preferences.',
+    'fields' => [
+      'id' => [
+        'description' => 'The primary identifier for a preference.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'entity_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
+      'preference_type' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'label' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'machine_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'cql_query' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'status' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 1,
+      ],
+    ],
+    'indexes' => [
+      'id' => ['id'],
+      'label' => ['label'],
+      'machine_name' => ['machine_name'],
+    ],
+    'primary_key' => [
+      'id'
+    ],
+  ];
+
+  return $schema;
+}

@@ -7,13 +7,15 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
-    - field.field.node.subscription.field_preferences_set
     - field.field.node.subscription.field_subscriber_email
+    - field.field.node.subscription.field_types_categories
+    - field.field.node.subscription.field_types_materials
     - field.field.node.subscription.field_url_for_item_page
     - image.style.thumbnail
     - node.type.subscription
   module:
     - color_field
+    - emailservice
     - image
 id: node.subscription.default
 targetEntityType: node
@@ -22,27 +24,15 @@ mode: default
 content:
   field_buttons_color:
     weight: 4
-    settings:
-      show_input: ''
-      show_palette: ''
-      palette: ''
-      show_palette_only: ''
-      show_buttons: ''
-      allow_empty: ''
+    settings: {  }
     third_party_settings: {  }
-    type: color_field_widget_spectrum
+    type: color_field_widget_html5
     region: content
   field_headline_color:
     weight: 3
-    settings:
-      show_input: ''
-      show_palette: ''
-      palette: ''
-      show_palette_only: ''
-      show_buttons: ''
-      allow_empty: ''
+    settings: {  }
     third_party_settings: {  }
-    type: color_field_widget_spectrum
+    type: color_field_widget_html5
     region: content
   field_intro_text:
     weight: 1
@@ -68,13 +58,6 @@ content:
     third_party_settings: {  }
     type: string_textfield
     region: content
-  field_preferences_set:
-    weight: 5
-    settings:
-      placeholder: ''
-    third_party_settings: {  }
-    type: number
-    region: content
   field_subscriber_email:
     weight: 7
     settings:
@@ -82,6 +65,18 @@ content:
       placeholder: ''
     third_party_settings: {  }
     type: email_default
+    region: content
+  field_types_categories:
+    weight: 27
+    settings: {  }
+    third_party_settings: {  }
+    type: preferences_set_widget
+    region: content
+  field_types_materials:
+    weight: 26
+    settings: {  }
+    third_party_settings: {  }
+    type: preferences_set_widget
     region: content
   field_url_for_item_page:
     weight: 8

@@ -4,6 +4,8 @@ status: true
 dependencies:
   module:
     - node
+_core:
+  default_config_hash: WoKbpkId4xlage2oaP0qZjaojOz2zifI4lvtmriEt8k
 id: node.field_mailing_list_id
 field_name: field_mailing_list_id
 entity_type: node
