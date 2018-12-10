@@ -5,6 +5,8 @@ dependencies:
   module:
     - color_field
     - node
+_core:
+  default_config_hash: MxVFVdke8IhfJDnKaD_Q9NkvDb_zInUM9tELoB3XIxI
 id: node.field_buttons_color
 field_name: field_buttons_color
 entity_type: node

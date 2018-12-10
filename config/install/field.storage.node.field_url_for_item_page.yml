@@ -4,6 +4,8 @@ status: true
 dependencies:
   module:
     - node
+_core:
+  default_config_hash: wQ2AfCk0WZ-ChAWfxed9H1OL5EWU8cYs7_00eZ49FKw
 id: node.field_url_for_item_page
 field_name: field_url_for_item_page
 entity_type: node
