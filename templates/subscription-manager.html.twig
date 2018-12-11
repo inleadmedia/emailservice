@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>{{ title }}</title>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+<body>
+{% if node %}
+  <div class="container">
+    <div class="row mt-5">
+      <div class="col-12">
+        {{ logo }}
+      </div>
+    </div>
+
+    <div class="row mt-5">
+      <div class="col-12">
+        <p>{{ intro }}</p>
+      </div>
+    </div>
+
+    <hr class="col-12" style="border-top: 3px solid black">
+
+    <div class="row mb-3 mt-5">
+      <div class="form-inline col-12">
+        <div class="form-group">
+          <label for="exampleFormControlInput1">Email address:</label>
+          <input type="email" size="40" class="ml-3 form-control" id="exampleFormControlInput1"
+                 placeholder="Type in the email address you wish to use.">
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-5 mb-3">
+      <div class="col-12">
+        <h3>Preferences</h3>
+      </div>
+    </div>
+    <div class="row mb-5">
+      <div class="col-sm">
+        <p>Types of materials</p>
+        {% for i, type in types %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="{{ i }}">
+            <label class="form-check-label" for="{{ i }}">
+              {{ type }}
+            </label>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="col-sm">
+        <p>Genres/Categories</p>
+        {% for i, category in categories %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="{{ i }}">
+            <label class="form-check-label" for="{{ i }}">
+              {{ category }}
+            </label>
+          </div>
+        {% endfor %}
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <a href="#" class="btn btn-primary">Subscribe/Update my preferences</a>
+        <a href="#" class="btn btn-danger">Unsubscribe all/Delete my profile</a>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div style="margin: 0;padding: 0;display: flex; justify-content: center; align-items: center; height: 100vh">
+    <p>No params provided.<br>Please re-check link you've received.</p>
+  </div>
+{% endif %}
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+</body>
+</html>
