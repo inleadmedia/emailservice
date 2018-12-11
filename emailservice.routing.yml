@@ -1,0 +1,7 @@
+emailservice.subscription_manager:
+  path: '/sm'
+  defaults:
+    _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::content'
+    _title: 'content'
+  requirements:
+    _permission: 'access content'

@@ -1,0 +1,6 @@
+services:
+  emailservice.event_subscriber:
+    class: Drupal\emailservice\EventSubscriber\RedirectAnonymousSubscriber
+    arguments: []
+    tags:
+      - { name: event_subscriber }
