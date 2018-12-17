@@ -10,7 +10,7 @@ field_name: field_alias
 entity_type: user
 bundle: user
 label: Alias
-description: 'This field must contain user''s library short name which will be used further in composing preference machine_name.'
+description: ''
 required: true
 translatable: false
 default_value: {  }
