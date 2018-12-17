@@ -5,6 +5,9 @@
  * Emailservice module functionality.
  */
 
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\emailservice\PeytzmailConnect;
+
 /**
  * Implements hook_theme().
  */
@@ -14,7 +17,22 @@ function emailservice_theme($existing, $type, $theme, $path) {
       'template' => 'subscription-manager',
       'variables' => [
         'node' => NULL,
+        'user_email' => NULL,
+        'params' => NULL,
+        'subscriber_info' => NULL,
+        'form' => [],
       ],
+    ],
+    'subscriber_form' => [
+      'template' => 'subscriber-form',
+      'render elements' => 'form',
+      'variables' => [
+        'form' => NULL,
+      ]
+    ],
+    'emailservice_status_messages' => [
+      'template' => 'emailservice-status-messages',
+      'variables' => ['status_headings' => [], 'message_list' => NULL],
     ],
   ];
 }
@@ -26,8 +44,9 @@ function emailservice_preprocess_subscription_manager(&$variables) {
   if (!empty($variables['node'])) {
     $node = $variables['node'];
 
-    $logo_array = $node->get('field_logo')->getValue();
-    $file = \Drupal\file\Entity\File::load($logo_array[0]['target_id']);
+    // Process logo output.
+    $logo_array = $node->get('field_logo')->target_id;
+    $file = \Drupal\file\Entity\File::load($logo_array);
     $logo = [
       '#theme' => 'image_style',
       '#style_name' => 'medium',
@@ -36,10 +55,11 @@ function emailservice_preprocess_subscription_manager(&$variables) {
 
     $variables['logo'] = $logo;
 
-    $intro = $node->get('field_intro_text')->getValue();
-    $variables['intro'] = $intro[0]['value'];
+    // Process intro text output.
+    $intro = $node->get('field_intro_text')->value;
+    $variables['intro'] = $intro;
 
-
+    // Processing types/categories fields values.
     $fields = ['categories'=>'field_types_categories', 'types'=>'field_types_materials'];
 
     foreach ($fields as $name => $field) {
@@ -51,9 +71,62 @@ function emailservice_preprocess_subscription_manager(&$variables) {
       }
 
       $variables[$name] = $options;
-      $a = 1;
     }
-    $a = 1;
 
+    // Subscribe/Update button label handling.
+    $variables['btn_left_label'] = t('Subscribe');
+
+    if (!empty($variables['subscriber_info'])) {
+      $variables['btn_left_label'] = t('Update my preferences');
+    }
+
+
+    $messages = \Drupal\Core\Render\Element\StatusMessages::renderMessages();
+    $messages['#theme'] = 'emailservice_status_messages';
+    $variables['messages'] = \Drupal::service('renderer')->render($messages);
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+   if ($form_id == 'node_subscription_edit_form' || $form_id == 'node_subscription_form') {
+    $form["actions"]["submit"]["#submit"][] = 'emailservice_preferences_send';
+  }
+}
+
+
+function emailservice_preferences_send(&$form, FormStateInterface $form_state) {
+  $fields = [
+    'new_arrivals_categories' => 'field_types_categories',
+    'new_arrivals_types' => 'field_types_materials',
+  ];
+
+  $connection = \Drupal::database();
+  $subscriber_fields = [];
+  foreach ($fields as $alias => $field) {
+    $field_values = $form_state->getValue($field);
+
+    foreach ($field_values as $field_value) {
+      if (empty($field_value['label']) && !empty($field_value['machine_name']) && $field_value['machine_name'] != 'stub') {
+        $connection->update('emailservice_preferences_mapping')
+          ->fields(['status' => 0])
+          ->condition('machine_name', $field_value['machine_name'])
+          ->execute();
+      }
+
+      if (!empty($field_value['label'])) {
+        $subscriber_fields[$alias]['selection_list'][] = [
+          'key' => $field_value['machine_name'],
+          'value' => $field_value['label'],
+        ];
+      }
+    }
+  }
+
+  if (!empty($subscriber_fields)) {
+    $connect = new PeytzmailConnect();
+    $connect->setSubscriberFieldsData($subscriber_fields);
   }
 }

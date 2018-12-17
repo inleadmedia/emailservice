@@ -2,6 +2,16 @@ emailservice.subscription_manager:
   path: '/sm'
   defaults:
     _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::content'
-    _title: 'content'
+    _title: 'Subscription manager'
   requirements:
     _permission: 'access content'
+
+emailservice.emailservice_config_form:
+  path: '/admin/config/emailservice/emailserviceconfig'
+  defaults:
+    _form: '\Drupal\emailservice\Form\EmailserviceConfigForm'
+    _title: 'EmailserviceConfigForm'
+  requirements:
+    _permission: 'access administration pages'
+  options:
+    _admin_route: TRUE

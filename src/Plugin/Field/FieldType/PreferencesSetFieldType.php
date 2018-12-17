@@ -6,6 +6,7 @@ use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\user\Entity\User;
 
 /**
  * Plugin implementation of the 'preferences_set_field_type' field type.
@@ -101,7 +102,10 @@ class PreferencesSetFieldType extends FieldItemBase {
   }
 
   public function preSave() {
-    $prefix = '999999';
+    $user  = \Drupal::currentUser();
+    $loaded_user = User::load($user->id());
+
+    $prefix = $loaded_user->get('field_alias')->value;
     $machine_name = preg_replace('@[^a-z0-9-]+@', '-', strtolower($this->getValue()['label']));
     $this->set('machine_name', $prefix . '_' . $machine_name);
   }

@@ -9,6 +9,8 @@ dependencies:
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
     - field.field.node.subscription.field_subscriber_email
+    - field.field.node.subscription.field_types_categories
+    - field.field.node.subscription.field_types_materials
     - field.field.node.subscription.field_url_for_item_page
     - node.type.subscription
   module:
@@ -30,4 +32,6 @@ hidden:
   field_logo: true
   field_mailing_list_id: true
   field_subscriber_email: true
+  field_types_categories: true
+  field_types_materials: true
   field_url_for_item_page: true

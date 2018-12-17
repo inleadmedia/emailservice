@@ -30,7 +30,7 @@ class RedirectAnonymousSubscriber implements EventSubscriberInterface {
   }
 
   public function checkAuthStatus(GetResponseEvent $event) {
-
+$a = 1;
     if ($this->account->isAnonymous() && \Drupal::routeMatch()
         ->getRouteName() != 'user.login') {
       // Add logic to check other routes you want available to anonymous users,

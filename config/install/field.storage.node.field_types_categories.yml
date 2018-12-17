@@ -5,6 +5,8 @@ dependencies:
   module:
     - emailservice
     - node
+_core:
+  default_config_hash: QccDg1gcMwojWJK3Q5zomfAbFLP3xDOMTG5w2cB8HOU
 id: node.field_types_categories
 field_name: field_types_categories
 entity_type: node
