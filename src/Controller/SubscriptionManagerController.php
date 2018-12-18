@@ -76,9 +76,8 @@ class SubscriptionManagerController extends ControllerBase {
     return Response::create($rendered);
   }
 
-
   /**
-   * @param $param
+   * Compare municipality param against user's alias field.
    */
   public function checkMunicipalityParam($param) {
     $users = \Drupal::entityTypeManager()
@@ -89,4 +88,5 @@ class SubscriptionManagerController extends ControllerBase {
 
     return $users ? reset($users) : FALSE;
   }
+
 }

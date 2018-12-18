@@ -34,7 +34,6 @@ class EmailserviceConfigForm extends ConfigFormBase {
     $form['peytzmail_integration'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('PeytzMail Integration'),
-//      '#description' => $this->t('Hold service url and credentials'),
     ];
 
     $form['peytzmail_integration']['peytzmail_api_url'] = [
@@ -59,13 +58,6 @@ class EmailserviceConfigForm extends ConfigFormBase {
     ];
 
     return parent::buildForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    parent::validateForm($form, $form_state);
   }
 
   /**

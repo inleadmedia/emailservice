@@ -36,8 +36,8 @@ class PeytzmailConnect {
     $api_token = $this->config->get('peytzmail_api_token');
 
     $options = [
-      'auth' => [$api_token, null],
-      'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json']
+      'auth' => [$api_token, NULL],
+      'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
     ];
 
     $uri = '/api/v1/subscribers/search.json?criteria[email]=' . $email;
@@ -66,7 +66,7 @@ class PeytzmailConnect {
     $api_token = $this->config->get('peytzmail_api_token');
 
     $options = [
-      'auth' => [$api_token, null],
+      'auth' => [$api_token, NULL],
       'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
       'body' => json_encode(['subscribe' => $data]),
     ];
@@ -81,10 +81,8 @@ class PeytzmailConnect {
       'result' => $result,
     ];
 
-    $a = 1;
     return $return_data;
   }
-
 
   /**
    * @param $subscriber_data
@@ -96,9 +94,9 @@ class PeytzmailConnect {
     $api_token = $this->config->get('peytzmail_api_token');
 
     $options = [
-      'auth' => [$api_token, null],
+      'auth' => [$api_token, NULL],
       'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
-      'body' => json_encode($subscriber_data['subscriber'])
+      'body' => json_encode($subscriber_data['subscriber']),
     ];
 
     $uri = '/api/v1/subscribers/' . $subscriber_data['id'];
@@ -111,7 +109,6 @@ class PeytzmailConnect {
       'result' => $result,
     ];
 
-    $a = 1;
     return $return_data;
   }
 
@@ -133,14 +130,14 @@ class PeytzmailConnect {
       $set_for_send = json_encode($field_request_data);
 
       $options = [
-        'auth' => [$api_token, null],
+        'auth' => [$api_token, NULL],
         'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
         'body' => $set_for_send,
       ];
 
       $uri = '/api/v1/subscriber_fields/' . $field;
 
-      $request  = $this->request->put($uri, $options);
+      $request = $this->request->put($uri, $options);
 
       return $request;
     }
@@ -155,7 +152,7 @@ class PeytzmailConnect {
     $api_token = $this->config->get('peytzmail_api_token');
 
     $options = [
-      'auth' => [$api_token, null],
+      'auth' => [$api_token, NULL],
       'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
     ];
 
@@ -164,6 +161,6 @@ class PeytzmailConnect {
     $request = $this->request->get($uri, $options);
     $result = json_decode($request->getBody()->getContents());
     return $result;
-
   }
+
 }

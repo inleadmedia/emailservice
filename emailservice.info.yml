@@ -7,3 +7,4 @@ core: 8.x
 
 dependencies:
   - drupal:color_field
+  - drupal:field_group

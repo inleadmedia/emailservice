@@ -101,8 +101,11 @@ class PreferencesSetFieldType extends FieldItemBase {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function preSave() {
-    $user  = \Drupal::currentUser();
+    $user = \Drupal::currentUser();
     $loaded_user = User::load($user->id());
 
     $prefix = $loaded_user->get('field_alias')->value;
@@ -110,6 +113,9 @@ class PreferencesSetFieldType extends FieldItemBase {
     $this->set('machine_name', $prefix . '_' . $machine_name);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function postSave($update) {
     // Fetch entity.
     $entity = $this->getEntity();
@@ -122,9 +128,9 @@ class PreferencesSetFieldType extends FieldItemBase {
 
     // Extend preferences array.
     $db_pref = [
-        'entity_id' => $entity_id[0]['value'],
-        'preference_type' => $this->getFieldDefinition()->getName(),
-      ] + $preference;
+      'entity_id' => $entity_id[0]['value'],
+      'preference_type' => $this->getFieldDefinition()->getName(),
+    ] + $preference;
 
     $connection = \Drupal::database();
     $connection->merge('emailservice_preferences_mapping')

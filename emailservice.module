@@ -96,7 +96,9 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
   }
 }
 
-
+/**
+ * Custom node form submit callback.
+ */
 function emailservice_preferences_send(&$form, FormStateInterface $form_state) {
   $fields = [
     'new_arrivals_categories' => 'field_types_categories',

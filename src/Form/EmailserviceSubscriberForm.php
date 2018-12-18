@@ -12,7 +12,6 @@ use Drupal\node\Entity\Node;
  */
 class EmailserviceSubscriberForm extends FormBase {
 
-
   /**
    * {@inheritdoc}
    */
@@ -66,7 +65,6 @@ class EmailserviceSubscriberForm extends FormBase {
         '#options' => $type_options,
         '#default_value' => !empty($subscriber_info['types']) ? $subscriber_info['types'] : [],
       ];
-
 
       $node_field_categories = $node->get('field_types_categories')->getValue();
       $category_options = [];
@@ -123,13 +121,6 @@ class EmailserviceSubscriberForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    parent::validateForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $op = $form_state->getTriggeringElement();
 
@@ -159,8 +150,8 @@ class EmailserviceSubscriberForm extends FormBase {
       $subscribe = [
         'mailinglist_ids' => [$form_data['mailinglist_id']],
         'subscriber' => [
-            'email' => $form_data['email_address'],
-          ] + $data['subscriber'],
+          'email' => $form_data['email_address'],
+        ] + $data['subscriber'],
       ];
 
       $connect->signupMailinlist($subscribe);
@@ -174,4 +165,5 @@ class EmailserviceSubscriberForm extends FormBase {
     $messenger = \Drupal::messenger();
     $messenger->addStatus($message);
   }
+
 }
