@@ -1,14 +1,11 @@
-uuid: f79a6985-d07d-4de9-b1e7-1f46254525b0
 langcode: en
 status: true
 dependencies:
   module:
-    - node
-_core:
-  default_config_hash: 94HemAN11EaZH4QAI9yCGPATNBkSqHqO--ZLbsBUx2M
-id: node.field_mailing_list_id
-field_name: field_mailing_list_id
-entity_type: node
+    - user
+id: user.field_alias
+field_name: field_alias
+entity_type: user
 type: string
 settings:
   max_length: 255

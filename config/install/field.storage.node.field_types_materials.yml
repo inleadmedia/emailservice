@@ -5,6 +5,8 @@ dependencies:
   module:
     - emailservice
     - node
+_core:
+  default_config_hash: SVbLgO6jgYtQA2X0vkTfZox098gYymSOLPNJthxK7cQ
 id: node.field_types_materials
 field_name: field_types_materials
 entity_type: node

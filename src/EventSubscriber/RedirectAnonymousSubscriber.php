@@ -24,15 +24,16 @@ class RedirectAnonymousSubscriber implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  static function getSubscribedEvents() {
+  public static function getSubscribedEvents() {
     $events[KernelEvents::REQUEST][] = ['checkAuthStatus'];
     return $events;
   }
 
+  /**
+   * Check if user is authenticated.
+   */
   public function checkAuthStatus(GetResponseEvent $event) {
-
-    if ($this->account->isAnonymous() && \Drupal::routeMatch()
-        ->getRouteName() != 'user.login') {
+    if ($this->account->isAnonymous() && \Drupal::routeMatch()->getRouteName() != 'user.login') {
       // Add logic to check other routes you want available to anonymous users,
       // otherwise, redirect to login page.
       $route_name = \Drupal::routeMatch()->getRouteName();
