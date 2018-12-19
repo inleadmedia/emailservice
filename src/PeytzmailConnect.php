@@ -177,7 +177,7 @@ class PeytzmailConnect {
     $data_for_send['newsletter'] = [
       'title' => 'AD Test Newsletter 2',
       'feeds' => [
-        'name' => 'new_arrivals',
+        'name' => 'pushed_arrivals',
         'data' => $feed,
       ],
     ];
