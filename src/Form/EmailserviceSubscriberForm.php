@@ -44,7 +44,7 @@ class EmailserviceSubscriberForm extends FormBase {
       '#type' => 'fieldset',
       '#title' => $this->t('Preferences'),
       '#attributes' => [
-        'class' => ['mt-3'],
+        'class' => [''],
       ],
     ];
 
@@ -56,7 +56,7 @@ class EmailserviceSubscriberForm extends FormBase {
       }
 
       $form['preferences_wrapper']['types'] = [
-        '#prefix' => '<div class="row mt-3 mb-3"><div class="col">',
+        '#prefix' => '<div class="row my-3"><div class="col">',
         '#suffix' => '</div>',
         '#type' => 'checkboxes',
         '#id' => 'preference_types',
@@ -96,6 +96,7 @@ class EmailserviceSubscriberForm extends FormBase {
       '#value' => $this->t('Subscribe'),
       '#attributes' => [
         'class' => ['btn', 'btn-primary'],
+        'style' => 'background-color: {valuefromnode}; border-color: {valuefromnode}',
       ],
     ];
 

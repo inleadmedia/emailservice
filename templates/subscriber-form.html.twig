@@ -11,25 +11,30 @@
   </div>
 
 
-  <h3>{{ 'Preferences'|t }}</h3>
+  <div class="card">
+    <div class="card-header">{{ 'Preferences'|t }}</div>
 
-  <div class="row">
-    <div class="col-6">
-      <div class="form-group">
-        {{ form.types['#options'] }}
+    <div class="card-body">
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            {{ form.types['#options'] }}
+          </div>
+        </div>
+
+        <div class="col-6">
+          <div class="form-group">
+            {{ form.categories }}
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12">
+          {{ form.actions }}
+        </div>
       </div>
     </div>
 
-    <div class="col-6">
-      <div class="form-group">
-        {{ form.categories }}
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-12">
-      {{ form.actions }}
-    </div>
   </div>
 </form>
