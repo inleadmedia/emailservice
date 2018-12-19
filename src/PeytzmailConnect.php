@@ -113,13 +113,15 @@ class PeytzmailConnect {
   }
 
   /**
-   * @param $data
+   * Setting the subscriber field data and push to Peytzmail.
+   *
+   * @param array $data
+   *   Array containing field values.
    */
-  public function setSubscriberFieldsData($data) {
+  public function setSubscriberFieldsData(array $data) {
     $api_token = $this->config->get('peytzmail_api_token');
 
     foreach ($data as $field => $field_data) {
-
       $field_request_data = $this->getSubscriberFieldsData($field);
       $original_set = $field_request_data->subscriber_field->selection_list;
       $new_set = $field_data['selection_list'];
@@ -137,9 +139,7 @@ class PeytzmailConnect {
 
       $uri = '/api/v1/subscriber_fields/' . $field;
 
-      $request = $this->request->put($uri, $options);
-
-      return $request;
+      $this->request->put($uri, $options);
     }
   }
 
@@ -161,6 +161,41 @@ class PeytzmailConnect {
     $request = $this->request->get($uri, $options);
     $result = json_decode($request->getBody()->getContents());
     return $result;
+  }
+
+  /**
+   * Create newsletter and initialize send-out.
+   *
+   * @param array $feed
+   *   Feed content.
+   */
+  public function createAndSend(array $feed) {
+    $api_token = $this->config->get('peytzmail_api_token');
+    $mailinglist = 'arrivals-test-mailinglist';
+
+    $data_for_send = [];
+    $data_for_send['newsletter'] = [
+      'title' => 'AD Test Newsletter 2',
+      'feeds' => [
+        'name' => 'pushed_arrivals',
+        'data' => $feed,
+      ],
+    ];
+
+    $options = [
+      'auth' => [$api_token, NULL],
+      'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
+      'body' => json_encode($data_for_send),
+    ];
+
+    $uri = '/api/v1/mailinglists/' . $mailinglist . '/newsletters/create_and_send.json';
+
+    try {
+      $this->request->post($uri, $options);
+    }
+    catch (ClientException $exception) {
+      throw $exception;
+    }
   }
 
 }

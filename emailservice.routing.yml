@@ -15,3 +15,12 @@ emailservice.emailservice_config_form:
     _permission: 'access administration pages'
   options:
     _admin_route: TRUE
+
+# For development purposes. After hook_cron implementation, must be removed.
+emailservice.test_feed:
+  path: '/test-feed'
+  defaults:
+    _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::testingFeed'
+    _title: 'Test feed'
+  requirements:
+    _permission: 'access content'

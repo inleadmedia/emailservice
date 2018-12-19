@@ -22,6 +22,20 @@ class PreferencesSetWidget extends WidgetBase {
   /**
    * {@inheritdoc}
    */
+  public static function defaultSettings() {
+    return parent::defaultSettings();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsForm(array $form, FormStateInterface $form_state) {
+    return parent::settingsForm($form, $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function settingsSummary() {
     $summary = [];
     return $summary;

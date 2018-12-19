@@ -6,5 +6,5 @@ label: 'Local admin'
 weight: 3
 is_admin: null
 permissions:
-  - 'create subscription content'
+  - 'access toolbar'
   - 'edit own subscription content'
