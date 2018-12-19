@@ -1,3 +1,4 @@
+uuid: f437eadd-d528-40e5-81cb-a3cd14b7d23a
 langcode: en
 status: true
 dependencies:
@@ -7,6 +8,8 @@ dependencies:
   module:
     - node
     - user
+_core:
+  default_config_hash: ezK5Dw8P_4bqJdDQIiecSAJak9p1Wf1yDwHzTutGFuQ
 id: frontpage
 label: Frontpage
 module: node
@@ -160,43 +163,6 @@ display:
           plugin_id: language
           entity_type: node
           entity_field: langcode
-        uid_current:
-          id: uid_current
-          table: users
-          field: uid_current
-          relationship: uid
-          group_type: group
-          admin_label: ''
-          operator: '='
-          value: '1'
-          group: 1
-          exposed: false
-          expose:
-            operator_id: ''
-            label: ''
-            description: ''
-            use_operator: false
-            operator: ''
-            identifier: ''
-            required: false
-            remember: false
-            multiple: false
-            remember_roles:
-              authenticated: authenticated
-          is_grouped: false
-          group_info:
-            label: ''
-            description: ''
-            identifier: ''
-            optional: true
-            widget: select
-            multiple: false
-            remember: false
-            default_group: All
-            default_group_multiple: {  }
-            group_items: {  }
-          entity_type: user
-          plugin_id: user_current
       pager:
         type: full
         options:
@@ -270,21 +236,14 @@ display:
       title: ''
       header: {  }
       footer: {  }
-      relationships:
-        uid:
-          id: uid
-          table: node_field_data
-          field: uid
-          relationship: none
-          group_type: group
-          admin_label: author
-          required: true
-          entity_type: node
-          entity_field: uid
-          plugin_id: standard
+      relationships: {  }
       fields: {  }
       arguments: {  }
       display_extenders: {  }
+      filter_groups:
+        operator: AND
+        groups:
+          1: AND
     display_plugin: default
     display_title: Master
     id: default
@@ -293,7 +252,6 @@ display:
       contexts:
         - 'languages:language_interface'
         - url.query_args
-        - user
         - 'user.node_grants:view'
         - user.permissions
       max-age: -1
@@ -329,7 +287,6 @@ display:
     cache_metadata:
       contexts:
         - 'languages:language_interface'
-        - user
         - 'user.node_grants:view'
         - user.permissions
       max-age: -1
@@ -346,7 +303,6 @@ display:
       contexts:
         - 'languages:language_interface'
         - url.query_args
-        - user
         - 'user.node_grants:view'
         - user.permissions
       max-age: -1

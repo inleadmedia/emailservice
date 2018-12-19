@@ -5,8 +5,12 @@
  * Emailservice module functionality.
  */
 
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultForbidden;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\emailservice\PeytzmailConnect;
+use Drupal\views\Plugin\views\query\QueryPluginBase;
+use Drupal\views\ViewExecutable;
 
 /**
  * Implements hook_theme().
@@ -91,8 +95,12 @@ function emailservice_preprocess_subscription_manager(&$variables) {
  * Implements hook_form_alter().
  */
 function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-   if ($form_id == 'node_subscription_edit_form' || $form_id == 'node_subscription_form') {
-    $form["actions"]["submit"]["#submit"][] = 'emailservice_preferences_send';
+  if ($form_id == 'node_subscription_edit_form' || $form_id == 'node_subscription_form') {
+    foreach (array_keys($form['actions']) as $action) {
+      if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
+        $form['actions'][$action]['#submit'][] = 'emailservice_preferences_send';
+      }
+    }
   }
 }
 
@@ -100,6 +108,7 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
  * Custom node form submit callback.
  */
 function emailservice_preferences_send(&$form, FormStateInterface $form_state) {
+  $a = 1;
   $fields = [
     'new_arrivals_categories' => 'field_types_categories',
     'new_arrivals_types' => 'field_types_materials',
@@ -118,7 +127,7 @@ function emailservice_preferences_send(&$form, FormStateInterface $form_state) {
           ->execute();
       }
 
-      if (!empty($field_value['label'])) {
+      if (!empty($field_value['label']) && $field_value['machine_name'] != 'stub') {
         $subscriber_fields[$alias]['selection_list'][] = [
           'key' => $field_value['machine_name'],
           'value' => $field_value['label'],
@@ -130,5 +139,40 @@ function emailservice_preferences_send(&$form, FormStateInterface $form_state) {
   if (!empty($subscriber_fields)) {
     $connect = new PeytzmailConnect();
     $connect->setSubscriberFieldsData($subscriber_fields);
+  }
+}
+
+/**
+ * Implements hook_views_query_alter().
+ */
+function emailservice_views_query_alter(ViewExecutable $view, QueryPluginBase $query) {
+  if ($view->id() == 'frontpage') {
+    $current_user = \Drupal::currentUser();
+    $user_roles = $current_user->getRoles();
+
+    $query->addWhere('1', 'node_field_data.type', 'subscription');
+
+    if (!in_array('administrator', $user_roles)) {
+      $query->addWhere('1', 'node_field_data.uid', $current_user->id());
+    }
+  }
+}
+
+/**
+ * Implements hook_node_access().
+ */
+function emailservice_node_access(\Drupal\node\NodeInterface $node, $op, \Drupal\Core\Session\AccountInterface $account) {
+  switch ($op) {
+    case 'view':
+    case 'update':
+      return AccessResult::allowedIf($node->getOwnerId() == $account->id());
+      break;
+
+    case 'create':
+    case 'delete':
+      $access = new AccessResultForbidden();
+      $access->addCacheableDependency($node);
+      return $access;
+      break;
   }
 }

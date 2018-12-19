@@ -5,7 +5,7 @@ dependencies:
   module:
     - node
 _core:
-  default_config_hash: 94HemAN11EaZH4QAI9yCGPATNBkSqHqO--ZLbsBUx2M
+  default_config_hash: 7cTyJORuarm5hFmZiBJ2mAFGfp-MIWdxSS-vCaZTZWE
 id: node.field_mailing_list_id
 field_name: field_mailing_list_id
 entity_type: node

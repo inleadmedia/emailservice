@@ -7,7 +7,6 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
-    - field.field.node.subscription.field_subscriber_email
     - field.field.node.subscription.field_types_categories
     - field.field.node.subscription.field_types_materials
     - field.field.node.subscription.field_url_for_item_page
@@ -51,35 +50,27 @@ content:
     type: image_image
     region: content
   field_mailing_list_id:
-    weight: 6
+    weight: 5
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
     type: string_textfield
     region: content
-  field_subscriber_email:
-    weight: 7
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-    type: email_default
-    region: content
   field_types_categories:
-    weight: 27
+    weight: 9
     settings: {  }
     third_party_settings: {  }
     type: preferences_set_widget
     region: content
   field_types_materials:
-    weight: 26
+    weight: 8
     settings: {  }
     third_party_settings: {  }
     type: preferences_set_widget
     region: content
   field_url_for_item_page:
-    weight: 8
+    weight: 7
     settings:
       size: 60
       placeholder: ''
@@ -94,10 +85,18 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 10
+    region: content
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
 hidden:
   created: true
   path: true
   promote: true
   status: true
   sticky: true
-  uid: true

@@ -32,6 +32,7 @@ class EmailserviceSubscriberForm extends FormBase {
       '#type' => 'email',
       '#title' => $this->t('Email address'),
       '#default_value' => !empty($subscriber_info['email']) ? $subscriber_info['email'] : '',
+      '#required' => TRUE,
       '#attributes' => [
         'placeholder' => $this->t('Type in the email address you wish to use.'),
         'class' => ['form-control'],
@@ -146,7 +147,6 @@ class EmailserviceSubscriberForm extends FormBase {
     $subscriber_data['subscriber'] = $data;
 
     if ($op['#name'] == 'subscribe') {
-
       $subscribe = [
         'mailinglist_ids' => [$form_data['mailinglist_id']],
         'subscriber' => [

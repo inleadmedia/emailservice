@@ -19,6 +19,7 @@ class SubscriptionManagerController extends ControllerBase {
 
     $nids = NULL;
     $node = NULL;
+    $valid_user = FALSE;
 
     $params = \Drupal::request()->query->all();
 
@@ -33,8 +34,9 @@ class SubscriptionManagerController extends ControllerBase {
       '#theme' => 'subscription_manager',
     ];
 
-    $valid_user = $this->checkMunicipalityParam($params['municipality']);
-
+    if (!empty($params['municipality'])) {
+      $valid_user = $this->checkMunicipalityParam($params['municipality']);
+    }
     if (!empty($valid_user)) {
       $nids = \Drupal::entityQuery('node')
         ->condition('status', 1)
@@ -74,6 +76,35 @@ class SubscriptionManagerController extends ControllerBase {
     }
     $rendered = \Drupal::service('renderer')->render($return);
     return Response::create($rendered);
+  }
+
+  /**
+   * Test function.
+   *
+   * @TODO: Remove after hook_cron() is implemented.
+   */
+  public function testingFeed() {
+    $feed = '[
+      {
+        "title": "Alle Ellens hunde bozeak",
+        "subject": "Skønlitteratur",
+        "date": "2018",
+        "type": "Billedbog",
+        "identifier": "870970-basis:54632428",
+        "creator": "Kruusval, Catarina bozeak",
+        "type_key": "billedbog",
+        "subject_key": "skanbib_skonlitteratur",
+        "image": "https://www.slagelsebib.dk/sites/default/files/styles/ting_cover_small/public/ting/covers/870970-basis-54632428.jpg",
+        "url": "https://www.bibliotek.skanderborg.dk/ting/object/870970-basis:54632428"
+      }
+    ]';
+
+    $ddd = json_decode($feed);
+
+    $connect = new PeytzmailConnect();
+    $return = $connect->createAndSend($ddd);
+
+    return $return;
   }
 
   /**

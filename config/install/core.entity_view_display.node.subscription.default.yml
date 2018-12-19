@@ -7,7 +7,6 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
-    - field.field.node.subscription.field_subscriber_email
     - field.field.node.subscription.field_types_categories
     - field.field.node.subscription.field_types_materials
     - field.field.node.subscription.field_url_for_item_page
@@ -36,13 +35,6 @@ content:
       image_link: ''
     third_party_settings: {  }
     type: image
-    region: content
-  field_subscriber_email:
-    weight: 3
-    label: inline
-    settings: {  }
-    third_party_settings: {  }
-    type: basic_string
     region: content
   field_types_categories:
     weight: 5
