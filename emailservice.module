@@ -27,13 +27,6 @@ function emailservice_theme($existing, $type, $theme, $path) {
         'form' => [],
       ],
     ],
-    'subscriber_form' => [
-      'template' => 'subscriber-form',
-      'render elements' => 'form',
-      'variables' => [
-        'form' => NULL,
-      ]
-    ],
     'emailservice_status_messages' => [
       'template' => 'emailservice-status-messages',
       'variables' => ['status_headings' => [], 'message_list' => NULL],
@@ -64,7 +57,7 @@ function emailservice_preprocess_subscription_manager(&$variables) {
     $variables['intro'] = $intro;
 
     // Processing types/categories fields values.
-    $fields = ['categories'=>'field_types_categories', 'types'=>'field_types_materials'];
+    $fields = ['categories'=>'field_types_categories'];
 
     foreach ($fields as $name => $field) {
       $getfield = $node->get($field)->getValue();
@@ -83,6 +76,8 @@ function emailservice_preprocess_subscription_manager(&$variables) {
     if (!empty($variables['subscriber_info'])) {
       $variables['btn_left_label'] = t('Update my preferences');
     }
+
+    $variables['headline_color'] = $node->get('field_headline_color')->color;
 
 
     $messages = \Drupal\Core\Render\Element\StatusMessages::renderMessages();
@@ -108,10 +103,8 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
  * Custom node form submit callback.
  */
 function emailservice_preferences_send(&$form, FormStateInterface $form_state) {
-  $a = 1;
   $fields = [
     'new_arrivals_categories' => 'field_types_categories',
-    'new_arrivals_types' => 'field_types_materials',
   ];
 
   $connection = \Drupal::database();

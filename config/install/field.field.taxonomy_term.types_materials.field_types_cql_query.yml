@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_types_cql_query
+    - taxonomy.vocabulary.types_materials
+id: taxonomy_term.types_materials.field_types_cql_query
+field_name: field_types_cql_query
+entity_type: taxonomy_term
+bundle: types_materials
+label: 'CQL Query'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
