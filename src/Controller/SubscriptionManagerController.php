@@ -118,8 +118,10 @@ class SubscriptionManagerController extends ControllerBase {
 
     $this->prepareNewsletter();
 
+    $mailinglist = $node->get('field_mailing_list_id')->getString();
+
     $connect = new PeytzmailConnect();
-    $return = $connect->createAndSend($this->newsletter);
+    $return = $connect->createAndSend($mailinglist, $this->newsletter);
     echo json_encode($this->newsletter);
     $rendered = \Drupal::service('renderer')->render($return);
     return Response::create($rendered);
