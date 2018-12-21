@@ -7,3 +7,6 @@ services:
   emailservice.peytz_connect:
     class: Drupal\emailservice\PeytzmailConnect
     arguments: []
+  emailservice.opensearch:
+    class: LMS\Client\OpenSearch
+    arguments: ['@http_client']

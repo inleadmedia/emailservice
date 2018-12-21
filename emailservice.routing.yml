@@ -16,11 +16,20 @@ emailservice.emailservice_config_form:
   options:
     _admin_route: TRUE
 
-# For development purposes. After hook_cron implementation, must be removed.
-emailservice.test_feed:
-  path: '/test-feed'
+emailservice.lms_config_form:
+  path: '/admin/config/lms/config'
   defaults:
-    _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::testingFeed'
-    _title: 'Test feed'
+    _form: '\Drupal\emailservice\Form\LMSClientConfigForm'
+    _title: 'LMSClientConfigForm'
+  requirements:
+    _permission: 'access administration pages'
+  options:
+    _admin_route: TRUE
+
+emailservice.newsletter:
+  path: '/newsletter/{nid}'
+  defaults:
+    _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::sendNewsletter'
+    _title: 'Send Newsletter'
   requirements:
     _permission: 'access content'

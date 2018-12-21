@@ -165,27 +165,13 @@ class PeytzmailConnect {
 
   /**
    * Create newsletter and initialize send-out.
-   *
-   * @param array $feed
-   *   Feed content.
    */
-  public function createAndSend(array $feed) {
+  public function createAndSend($mailinglist, $feed) {
     $api_token = $this->config->get('peytzmail_api_token');
-    $mailinglist = 'arrivals-test-mailinglist';
-
-    $data_for_send = [];
-    $data_for_send['newsletter'] = [
-      'title' => 'AD Test Newsletter 2',
-      'feeds' => [
-        'name' => 'pushed_arrivals',
-        'data' => $feed,
-      ],
-    ];
-
     $options = [
       'auth' => [$api_token, NULL],
       'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
-      'body' => json_encode($data_for_send),
+      'body' => json_encode($feed),
     ];
 
     $uri = '/api/v1/mailinglists/' . $mailinglist . '/newsletters/create_and_send.json';
