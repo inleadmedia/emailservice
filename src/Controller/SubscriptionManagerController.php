@@ -2,11 +2,14 @@
 
 namespace Drupal\emailservice\Controller;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\taxonomy\Entity\Term;
+use LMS\Client\OpenSearchException;
 
 /**
  * Class SubscriptionManagerController.
@@ -17,15 +20,9 @@ class SubscriptionManagerController extends ControllerBase {
 
   private function lmsRequest(string $nid, string $alias) {
     $url = \Drupal::config('lms.config')->get('lms_api_url');
-    $hash = \Drupal::config('lms.config')->get('lms_api_hash');
 
-    $materials = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
-      ->fields('epm', ['cql_query', 'label'])
-      ->condition('epm.entity_id', $nid)
-      ->condition('epm.preference_type', 'field_types_materials')
-      ->condition('epm.status', 1)
-      ->execute()
-      ->fetchAll();
+    $types_vocabulary = 'types_materials';
+    $materials = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($types_vocabulary);
 
     $categories = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
       ->fields('epm', ['cql_query', 'label'])
@@ -38,13 +35,22 @@ class SubscriptionManagerController extends ControllerBase {
     $results = [];
     foreach ($materials as $material) {
       foreach ($categories as $category) {
-        $query = "/search?query=(($material->cql_query) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
+        $term = Term::load($material->tid);
+        $type = $term->get('field_types_cql_query')->value;
+        $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
         $uri = $url . $alias . $query;
-        $content = \Drupal::service('emailservice.opensearch')->request($uri)->get('content');
+        try {
+          $content = \Drupal::service('emailservice.opensearch')->request($uri)->get('content');
+        }
+        catch (\Exception $e) {
+          \Drupal::messenger($this->t('LMS query is not properly set. Please revise terms and categories CQL request strings.'));
+          \Drupal::logger('emailservice')->warning($this->t('Wrong LMS query'));
+          $content = '';
+        }
 
-        $content = json_decode($content);
+        $content = Json::decode($content);
 
-        $content = array_map(function ($object) use ($alias, $material) {
+        $content = array_map(function ($object) use ($alias, $category) {
           $object->identifier = $object->id;
           unset($object->id);
 
@@ -57,14 +63,16 @@ class SubscriptionManagerController extends ControllerBase {
           unset($object->faustNumber);
           unset($object->description);
 
-          $object->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object->cover;
+          if (!empty($object->cover)) {
+            $object->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object->cover;
+          }
           unset($object->cover);
 
           $object->type_key = $this->filterPreference($object->type);
-          $object->subject_key = $alias . '_'. $this->filterPreference($material->label);
+          $object->subject_key = $alias . '_'. $this->filterPreference($category->label);
 
           return $object;
-        }, $content->objects);
+        }, $content['objects']);
 
         $results = array_merge($results, $content);
       }
@@ -84,7 +92,8 @@ class SubscriptionManagerController extends ControllerBase {
   }
 
   private function filterPreference($preference) {
-    return iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', strtolower($preference));
+//    return iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', strtolower($preference));
+    return strtolower($preference);
   }
 
   private function removeDuplicates($results) {
@@ -93,10 +102,12 @@ class SubscriptionManagerController extends ControllerBase {
 
   private function prepareFeed($title, $data) {
     $feeds = [
-      'name' => 'new_arrivals',
+      'name' => 'pushed_arrivals',
       'data' => $data,
     ];
     $feed = new \stdClass();
+    $feed->newsletter = new \stdClass();
+
     $feed->newsletter->title = $title;
     $feed->newsletter->feeds = $feeds;
 
@@ -104,26 +115,36 @@ class SubscriptionManagerController extends ControllerBase {
   }
 
   public function sendNewsletter($nid) {
-    if (empty($nid)) {
-      return FALSE;
-    }
-
     $node = Node::load($nid);
 
-    $owner = $node->getOwner();
-    $alias = $owner->get('field_alias')->getString();
+    try {
+      $owner = $node->getOwner();
+      $alias = $owner->get('field_alias')->getString();
 
-    $this->lmsRequest($nid, $alias);
+      $this->lmsRequest($nid, $alias);
 
-    $this->prepareNewsletter();
+      $this->prepareNewsletter();
 
-    $mailinglist = $node->get('field_mailing_list_id')->getString();
+      $mailinglist = $node->get('field_mailing_list_id')->getString();
 
-    $connect = new PeytzmailConnect();
-    $return = $connect->createAndSend($mailinglist, $this->newsletter);
-    echo json_encode($this->newsletter);
-    $rendered = \Drupal::service('renderer')->render($return);
-    return Response::create($rendered);
+      $connect = new PeytzmailConnect();
+      $return = $connect->createAndSend($mailinglist, $this->newsletter);
+
+      $content = Json::encode($this->newsletter);
+    }
+    catch (\Exception $exception) {
+      \Drupal::logger('emailservice')
+        ->error($exception->getMessage());
+      \Drupal::messenger($this->t($exception->getMessage()));
+
+      $content = [];
+    }
+
+    $renderer = [
+      '#markup' => $content,
+    ];
+
+    return $renderer;
   }
 
   /**
