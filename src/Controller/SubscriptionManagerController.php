@@ -6,8 +6,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
 use Symfony\Component\HttpFoundation\Response;
-use Drupal\node\NodeInterface;
-use \Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
  * Class SubscriptionManagerController.
@@ -109,8 +108,8 @@ class SubscriptionManagerController extends ControllerBase {
       return FALSE;
     }
 
-    $node =Node::load($nid);
-    
+    $node = Node::load($nid);
+
     $owner = $node->getOwner();
     $alias = $owner->get('field_alias')->getString();
 
@@ -144,7 +143,6 @@ class SubscriptionManagerController extends ControllerBase {
    * Content.
    */
   public function content() {
-
     $nids = NULL;
     $node = NULL;
     $valid_user = FALSE;

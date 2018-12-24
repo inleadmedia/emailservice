@@ -1,0 +1,8 @@
+langcode: und
+status: true
+dependencies: {  }
+name: 'Types of materials'
+vid: types_materials
+description: ''
+hierarchy: 0
+weight: 0

@@ -23,6 +23,8 @@ class EmailserviceSubscriberForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $subscriber_info = NULL, Node $node = NULL) {
+    $buttons_color = $node->get('field_buttons_color')->color;
+
     $form['mailinglist_id'] = [
       '#type' => 'hidden',
       '#value' => $subscriber_info['mailinglist_id'],
@@ -41,29 +43,31 @@ class EmailserviceSubscriberForm extends FormBase {
     ];
 
     $form['preferences_wrapper'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Preferences'),
-      '#attributes' => [
-        'class' => ['mt-3'],
-      ],
+      '#prefix' => '<div class="card">',
+      '#suffix' => '</div>',
+      '#type' => 'container',
+    ];
+
+    $form['preferences_wrapper']['title'] = [
+      '#type' => 'container',
+      '#markup' => '<div class="card-header">' . $this->t('Preferences') . '</div>',
     ];
 
     if (!empty($node)) {
-      $node_field_types = $node->get('field_types_materials')->getValue();
-      $type_options = [];
-      foreach ($node_field_types as $node_field_type) {
-        $type_options[$node_field_type['machine_name']] = $node_field_type['label'];
-      }
+      $types_vocabulary = 'types_materials';
+      $taxonomy_types = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($types_vocabulary);
+
+      $types_data = $this->prepareOptionsList($taxonomy_types);
 
       $form['preferences_wrapper']['types'] = [
-        '#prefix' => '<div class="row mt-3 mb-3"><div class="col">',
+        '#prefix' => '<div class="card-body"><div class="row"><div class="col-6">',
         '#suffix' => '</div>',
         '#type' => 'checkboxes',
         '#id' => 'preference_types',
         '#title' => $this->t('Types of materials'),
-        '#description' => $this->t('Cillum doloremque molestie, cillum velit pellentesque veritatis praesent hendrerit felis voluptatibus excepteur temporibus montes sint.'),
+        '#description' => $this->t('Choose the material types you are interested in:'),
         '#description_display' => 'before',
-        '#options' => $type_options,
+        '#options' => $types_data,
         '#default_value' => !empty($subscriber_info['types']) ? $subscriber_info['types'] : [],
       ];
 
@@ -75,35 +79,38 @@ class EmailserviceSubscriberForm extends FormBase {
       }
 
       $form['preferences_wrapper']['categories'] = [
-        '#prefix' => '<div class="col">',
-        '#suffix' => '</div></div',
+        '#prefix' => '<div class="col-6">',
+        '#suffix' => '</div></div>',
         '#type' => 'checkboxes',
         '#id' => 'preference_categories',
         '#title' => $this->t('Genre/Categories'),
-        '#description' => $this->t('Consequatur ab deleniti aliquet ullamco torquent maiores. Sed tristique mus, eum! Tempor, recusandae incidunt adipisci.'),
+        '#description' => $this->t('Choose the categories you are interested in:'),
         '#description_display' => 'before',
         '#options' => $category_options,
         '#default_value' => !empty($subscriber_info['categories']) ? $subscriber_info['categories'] : [],
       ];
     }
-    $form['actions'] = [
+    $form['preferences_wrapper']['actions'] = [
       '#type' => 'actions',
+      '#prefix' => '<div class="row mt-3"><div class="col-12">',
+      '#suffix' => '</div></div></div>',
     ];
 
-    $form['actions']['subscribe'] = [
+    $form['preferences_wrapper']['actions']['subscribe'] = [
       '#type' => 'submit',
       '#name' => 'subscribe',
       '#value' => $this->t('Subscribe'),
       '#attributes' => [
         'class' => ['btn', 'btn-primary'],
+        'style' => ["background-color: $buttons_color; border-color: $buttons_color"],
       ],
     ];
 
     if (!empty($subscriber_info['email'])) {
-      $form['actions']['subscribe']['#value'] = $this->t('Update my preferences');
-      $form['actions']['subscribe']['#name'] = 'update';
+      $form['preferences_wrapper']['actions']['subscribe']['#value'] = $this->t('Update my preferences');
+      $form['preferences_wrapper']['actions']['subscribe']['#name'] = 'update';
 
-      $form['actions']['delete'] = [
+      $form['preferences_wrapper']['actions']['delete'] = [
         '#type' => 'submit',
         '#value' => $this->t('Unsubscribe all/Delete my profile'),
         '#attributes' => [
@@ -124,6 +131,7 @@ class EmailserviceSubscriberForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $op = $form_state->getTriggeringElement();
+    $data = [];
 
     $connect = new PeytzmailConnect();
     $subscriber_data = $form_state->get('subscriber_info');
@@ -164,6 +172,18 @@ class EmailserviceSubscriberForm extends FormBase {
 
     $messenger = \Drupal::messenger();
     $messenger->addStatus($message);
+  }
+
+  /**
+   * Generate options list.
+   */
+  public function prepareOptionsList(array $terms) {
+    $result = [];
+    foreach ($terms as $term) {
+      $term_name = preg_replace('@[^a-z0-9-]+@', '-', strtolower($term->name));
+      $result[$term_name] = $term->name;
+    }
+    return $result;
   }
 
 }
