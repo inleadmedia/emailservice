@@ -19,7 +19,7 @@ class LMSClientConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'lms.config'
+      'lms.config',
     ];
   }
 
