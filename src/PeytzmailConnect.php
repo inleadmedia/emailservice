@@ -177,7 +177,8 @@ class PeytzmailConnect {
     $uri = '/api/v1/mailinglists/' . $mailinglist . '/newsletters/create_and_send.json';
 
     try {
-      $this->request->post($uri, $options);
+      $response = $this->request->post($uri, $options);
+      return $response->getBody()->getContents();
     }
     catch (ClientException $exception) {
       throw $exception;

@@ -94,19 +94,21 @@ class SubscriptionManagerController extends ControllerBase {
   }
 
   private function filterPreference($preference) {
-//    return iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', strtolower($preference));
     return strtolower($preference);
   }
 
   private function removeDuplicates($results) {
+    $results = array_map("unserialize", array_unique(array_map("serialize", $results)));
+
     return $results;
   }
 
   private function prepareFeed($title, $data) {
-    $feeds = [
-      'name' => 'pushed_arrivals',
-      'data' => $data,
-    ];
+    $object = new \stdClass();
+    $object->name = 'pushed_arrivals';
+    $object->data = $data;
+    $feeds[0] = $object;
+
     $feed = new \stdClass();
     $feed->newsletter = new \stdClass();
 
@@ -132,7 +134,7 @@ class SubscriptionManagerController extends ControllerBase {
       $connect = new PeytzmailConnect();
       $return = $connect->createAndSend($mailinglist, $this->newsletter);
 
-      $content = Json::encode($this->newsletter);
+      $content = Json::encode($return);
     }
     catch (\Exception $exception) {
       \Drupal::logger('emailservice')
