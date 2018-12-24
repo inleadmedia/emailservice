@@ -90,48 +90,38 @@ function emailservice_preprocess_subscription_manager(&$variables) {
  * Implements hook_form_alter().
  */
 function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  if ($form_id == 'node_subscription_edit_form' || $form_id == 'node_subscription_form') {
+  if ($form_id == 'taxonomy_term_types_materials_form' ) {
     foreach (array_keys($form['actions']) as $action) {
-      if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
-        $form['actions'][$action]['#submit'][] = 'emailservice_preferences_send';
+      if ($action != 'delete' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
+        $form['actions']['submit']['#submit'][] = 'emailservice_type_terms_send';
       }
     }
   }
 }
 
-/**
- * Custom node form submit callback.
- */
-function emailservice_preferences_send(&$form, FormStateInterface $form_state) {
-  $fields = [
-    'new_arrivals_categories' => 'field_types_categories',
-  ];
+function emailservice_type_terms_send(&$form, FormStateInterface $formState) {
+  $connect = new PeytzmailConnect();
+  $remote_field_data = $connect->getSubscriberFieldsData('new_arrivals_types');
 
-  $connection = \Drupal::database();
-  $subscriber_fields = [];
-  foreach ($fields as $alias => $field) {
-    $field_values = $form_state->getValue($field);
+  if (!empty($remote_field_data)) {
+    $selection_list  = $remote_field_data->subscriber_field->selection_list;
 
-    foreach ($field_values as $field_value) {
-      if (empty($field_value['label']) && !empty($field_value['machine_name']) && $field_value['machine_name'] != 'stub') {
-        $connection->update('emailservice_preferences_mapping')
-          ->fields(['status' => 0])
-          ->condition('machine_name', $field_value['machine_name'])
-          ->execute();
-      }
+    $term_value = $formState->getValue('name')[0]['value'];
+    $term_key = preg_replace('@[^a-z0-9-]+@', '-', strtolower($term_value));
 
-      if (!empty($field_value['label']) && $field_value['machine_name'] != 'stub') {
-        $subscriber_fields[$alias]['selection_list'][] = [
-          'key' => $field_value['machine_name'],
-          'value' => $field_value['label'],
-        ];
-      }
-    }
-  }
+    $term_update = new stdClass();
+    $term_update->key = $term_key;
+    $term_update->value = $term_value;
 
-  if (!empty($subscriber_fields)) {
-    $connect = new PeytzmailConnect();
-    $connect->setSubscriberFieldsData($subscriber_fields);
+    $selection_list[] = $term_update;
+
+    $data = [
+      'new_arrivals_types' => [
+        'selection_list' => $selection_list,
+      ],
+    ];
+
+    $connect->setSubscriberFieldsData($data);
   }
 }
 
@@ -168,4 +158,13 @@ function emailservice_node_access(\Drupal\node\NodeInterface $node, $op, \Drupal
       return $access;
       break;
   }
+}
+
+/**
+ * Implements hook_entity_type_alter().
+ */
+function emailservice_entity_type_alter(array &$entity_types) {
+  $handlers = $entity_types['node']->get('handlers');
+  $handlers['form']['edit'] = 'Drupal\emailservice\Form\SubscriptionNodeForm';
+  $entity_types['node']->set('handlers', $handlers);
 }

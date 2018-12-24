@@ -6,6 +6,7 @@ use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\emailservice\Controller\SubscriptionManagerController;
 use Drupal\user\Entity\User;
 
 /**
@@ -105,12 +106,9 @@ class PreferencesSetFieldType extends FieldItemBase {
    * {@inheritdoc}
    */
   public function preSave() {
-    $user = $this->getEntity()->get('uid')->target_id;
-    $loaded_user = User::load($user);
-
-    $prefix = $loaded_user->get('field_alias')->value;
-    $machine_name = preg_replace('@[^a-z0-9-]+@', '-', strtolower($this->getValue()['label']));
-    $this->set('machine_name', $prefix . '_' . $machine_name);
+    $machine_name = new SubscriptionManagerController();
+    $machine_name = $machine_name->generateMachineName($this->getEntity(), $this->getValue()['label']);
+    $this->set('machine_name', $machine_name);
   }
 
   /**
