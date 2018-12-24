@@ -27,12 +27,6 @@ class LMSClientConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    // This block to be removed after the submit is done.
-/*    $this->config('lms.config')
-      ->set('lms_api_url', 'https://v2.lms.inlead.ws/')
-      ->set('lms_api_hash', 'bronbib')
-      ->save();*/
-
     $config = $this->config('lms.config');
     $form['lms'] = [
       '#type' => 'fieldset',
@@ -42,12 +36,6 @@ class LMSClientConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Service URL'),
       '#default_value' => $config->get('lms_api_url'),
-      '#required' => TRUE,
-    ];
-    $form['lms']['lms_api_hash'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Agency hash'),
-      '#default_value' => $config->get('lms_api_hash'),
       '#required' => TRUE,
     ];
 
@@ -62,7 +50,6 @@ class LMSClientConfigForm extends ConfigFormBase {
 
     $this->config('lms.config')
       ->set('lms_api_url', $form_state->getValue('lms_api_url'))
-      ->set('lms_api_hash', $form_state->getValue('lms_api_hash'))
       ->save();
   }
 
