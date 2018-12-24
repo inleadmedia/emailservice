@@ -5,6 +5,7 @@ namespace Drupal\emailservice\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
+use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Datetime\DrupalDateTime;
 
@@ -61,7 +62,7 @@ class SubscriptionManagerController extends ControllerBase {
           unset($object->cover);
 
           $object->type_key = $this->filterPreference($object->type);
-          $object->subject_key = $alias . '_'. $this->filterPreference($material->label);
+          $object->subject_key = $alias . '_' . $this->filterPreference($material->label);
 
           return $object;
         }, $content->objects);
@@ -202,6 +203,24 @@ class SubscriptionManagerController extends ControllerBase {
     }
     $rendered = \Drupal::service('renderer')->render($return);
     return Response::create($rendered);
+  }
+
+  /**
+   * Helper for generating machine name.
+   *
+   * @param object $node
+   * @param string $label
+   *
+   * @return string
+   */
+  public function generateMachineName($node, $label) {
+    $user = $node->get('uid')->target_id;
+    $loaded_user = User::load($user);
+
+    $prefix = $loaded_user->get('field_alias')->value;
+    $machine_name = preg_replace('@[^a-z0-9-]+@', '-', strtolower($label));
+
+    return $prefix . '_' . $machine_name;
   }
 
 }

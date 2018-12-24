@@ -11,9 +11,7 @@ class LMSClientConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return [
-      'lms_config_form',
-    ];
+    return 'lms_config_form';
   }
 
   /**
@@ -21,7 +19,7 @@ class LMSClientConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'lms.config'
+      'lms.config',
     ];
   }
 
