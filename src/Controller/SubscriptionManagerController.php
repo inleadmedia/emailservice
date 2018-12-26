@@ -10,7 +10,6 @@ use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\taxonomy\Entity\Term;
-use LMS\Client\OpenSearchException;
 
 /**
  * Class SubscriptionManagerController.
@@ -19,6 +18,17 @@ class SubscriptionManagerController extends ControllerBase {
 
   private $newsletter;
 
+  /**
+   * Form and send request to LMS.
+   *
+   * @param string $nid
+   *   Node id of subscriber node.
+   * @param string $alias
+   *   Library user alias.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
   private function lmsRequest(string $nid, string $alias) {
     $url = \Drupal::config('lms.config')->get('lms_api_url');
 
@@ -40,11 +50,12 @@ class SubscriptionManagerController extends ControllerBase {
         $type = $term->get('field_types_cql_query')->value;
         $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
         $uri = $url . $alias . $query;
+        $a = 1;
         try {
           $content = \Drupal::service('emailservice.opensearch')->request($uri)->get('content');
         }
         catch (\Exception $e) {
-          \Drupal::messenger($this->t('LMS query is not properly set. Please revise terms and categories CQL request strings.'));
+          \Drupal::messenger()->addError($this->t('LMS query is not properly set. Please revise terms and categories CQL request strings.'));
           \Drupal::logger('emailservice')->warning($this->t('Wrong LMS query'));
           $content = '';
         }
@@ -83,6 +94,9 @@ class SubscriptionManagerController extends ControllerBase {
     $this->newsletter = $results;
   }
 
+  /**
+   * Prepare newsletter to be sent.
+   */
   private function prepareNewsletter() {
     $this->newsletter = $this->removeDuplicates($this->newsletter);
 
@@ -93,17 +107,46 @@ class SubscriptionManagerController extends ControllerBase {
 
   }
 
+  /**
+   * Prepare preference param.
+   *
+   * @param string $preference
+   *   Preference option.
+   *
+   * @return string
+   *   Lowercase preference.
+   */
   private function filterPreference($preference) {
     return strtolower($preference);
   }
 
-  private function removeDuplicates($results) {
+  /**
+   * Cleanup results.
+   *
+   * @param array $results
+   *   Array of results.
+   *
+   * @return array
+   *   Array without duplicated items.
+   */
+  private function removeDuplicates(array $results = NULL) {
     $results = array_map("unserialize", array_unique(array_map("serialize", $results)));
 
     return $results;
   }
 
-  private function prepareFeed($title, $data) {
+  /**
+   * Prepare feed.
+   *
+   * @param string $title
+   *   Newsletter title.
+   * @param array $data
+   *   Newsletter data.
+   *
+   * @return \stdClass
+   *   Feed object.
+   */
+  private function prepareFeed(string $title, array $data = NULL) {
     $object = new \stdClass();
     $object->name = 'pushed_arrivals';
     $object->data = $data;
@@ -118,6 +161,15 @@ class SubscriptionManagerController extends ControllerBase {
     return $feed;
   }
 
+  /**
+   * Send generated newsletter.
+   *
+   * @param int $nid
+   *   Identifier of sent node.
+   *
+   * @return array
+   *   Renderable array.
+   */
   public function sendNewsletter($nid) {
     $node = Node::load($nid);
 
@@ -139,7 +191,7 @@ class SubscriptionManagerController extends ControllerBase {
     catch (\Exception $exception) {
       \Drupal::logger('emailservice')
         ->error($exception->getMessage());
-      \Drupal::messenger($this->t($exception->getMessage()));
+      \Drupal::messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
 
       $content = [];
     }
@@ -153,6 +205,15 @@ class SubscriptionManagerController extends ControllerBase {
 
   /**
    * Compare municipality param against user's alias field.
+   *
+   * @param string $param
+   *   Check if such alias exists in database.
+   *
+   * @return object|bool
+   *   Returns user object or false.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   private function checkMunicipalityParam($param) {
     $users = \Drupal::entityTypeManager()
@@ -233,9 +294,12 @@ class SubscriptionManagerController extends ControllerBase {
    * Helper for generating machine name.
    *
    * @param object $node
+   *   Node on which we are acting.
    * @param string $label
+   *   The label of preference which have to be added.
    *
    * @return string
+   *   Generated machine name for category key.
    */
   public function generateMachineName($node, $label) {
     $user = $node->get('uid')->target_id;

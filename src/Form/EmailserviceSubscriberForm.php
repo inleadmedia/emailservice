@@ -162,8 +162,8 @@ class EmailserviceSubscriberForm extends FormBase {
         ] + $data['subscriber'],
       ];
 
-      $connect->signupMailinlist($subscribe);
-      $message = $this->t('You were successfuly subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
+      $connect->signupMailinglist($subscribe);
+      $message = $this->t('You were successfully subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
     }
     elseif ($op['#name'] == 'update') {
       $connect->updateSubscriber($subscriber_data);
@@ -176,6 +176,12 @@ class EmailserviceSubscriberForm extends FormBase {
 
   /**
    * Generate options list.
+   *
+   * @param array $terms
+   *   Array of terms.
+   *
+   * @return array
+   *   Options list.
    */
   public function prepareOptionsList(array $terms) {
     $result = [];
