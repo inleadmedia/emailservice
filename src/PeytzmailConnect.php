@@ -25,12 +25,13 @@ class PeytzmailConnect {
   }
 
   /**
-   * Get info about subscriber.
+   * Find subscriber.
    *
    * @param string $email
    *   Email of searched user.
    *
    * @return object|array
+   *   Response object from service or array in case when subscriber is missing.
    */
   public function findSubscriber($email) {
     $api_token = $this->config->get('peytzmail_api_token');
@@ -58,11 +59,15 @@ class PeytzmailConnect {
   }
 
   /**
-   * @param $data
+   * Signup to mailinglist.
+   *
+   * @param array $data
+   *   Subscriber data.
    *
    * @return array
+   *   Response from service.
    */
-  public function signupMailinlist($data) {
+  public function signupMailinglist(array $data) {
     $api_token = $this->config->get('peytzmail_api_token');
 
     $options = [
@@ -73,8 +78,13 @@ class PeytzmailConnect {
 
     $uri = '/api/v1/mailinglists/subscribe.json';
 
-    $response = $this->request->post($uri, $options);
-    $result = json_decode($response->getBody()->getContents());
+    try {
+      $response = $this->request->post($uri, $options);
+      $result = json_decode($response->getBody()->getContents());
+    }
+    catch (ClientException $exception) {
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+    }
 
     $return_data = [
       'code' => $response->getStatusCode(),
@@ -85,11 +95,15 @@ class PeytzmailConnect {
   }
 
   /**
-   * @param $subscriber_data
+   * Update subscription.
+   *
+   * @param array $subscriber_data
+   *   Data to be updated.
    *
    * @return array
+   *   Response from service.
    */
-  public function updateSubscriber($subscriber_data) {
+  public function updateSubscriber(array $subscriber_data) {
 
     $api_token = $this->config->get('peytzmail_api_token');
 
@@ -101,8 +115,13 @@ class PeytzmailConnect {
 
     $uri = '/api/v1/subscribers/' . $subscriber_data['id'];
 
-    $response = $this->request->put($uri, $options);
-    $result = json_decode($response->getBody()->getContents());
+    try {
+      $response = $this->request->put($uri, $options);
+      $result = json_decode($response->getBody()->getContents());
+    }
+    catch (ClientException $exception) {
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+    }
 
     $return_data = [
       'code' => $response->getStatusCode(),
@@ -139,14 +158,23 @@ class PeytzmailConnect {
 
       $uri = '/api/v1/subscriber_fields/' . $field;
 
-      $this->request->put($uri, $options);
+      try {
+        $this->request->put($uri, $options);
+      }
+      catch (ClientException $exception) {
+        \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      }
     }
   }
 
   /**
-   * @param $field
+   * Get Subscriber Fields data.
+   *
+   * @param string $field
+   *   Subscriber field.
    *
    * @return mixed
+   *   Requested subscriber field data.
    */
   public function getSubscriberFieldsData($field) {
     $api_token = $this->config->get('peytzmail_api_token');
@@ -158,15 +186,29 @@ class PeytzmailConnect {
 
     $uri = '/api/v1/subscriber_fields/' . $field;
 
-    $request = $this->request->get($uri, $options);
+    try {
+      $request = $this->request->get($uri, $options);
+    }
+    catch (ClientException $exception) {
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+    }
+
     $result = json_decode($request->getBody()->getContents());
     return $result;
   }
 
   /**
    * Create newsletter and initialize send-out.
+   *
+   * @param string $mailinglist
+   *   Mailing List param.
+   * @param object $feed
+   *   Feed to be sent.
+   *
+   * @return mixed
+   *   Response from service.
    */
-  public function createAndSend($mailinglist, $feed) {
+  public function createAndSend(string $mailinglist, $feed) {
     $api_token = $this->config->get('peytzmail_api_token');
     $options = [
       'auth' => [$api_token, NULL],
@@ -181,7 +223,7 @@ class PeytzmailConnect {
       return $response->getBody()->getContents();
     }
     catch (ClientException $exception) {
-      throw $exception;
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
 
