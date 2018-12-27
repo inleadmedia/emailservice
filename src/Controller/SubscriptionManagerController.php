@@ -50,13 +50,13 @@ class SubscriptionManagerController extends ControllerBase {
         $type = $term->get('field_types_cql_query')->value;
         $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
         $uri = $url . $alias . $query;
-        $a = 1;
+
         try {
           $content = \Drupal::service('emailservice.opensearch')->request($uri)->get('content');
         }
         catch (\Exception $e) {
-          \Drupal::messenger()->addError($this->t('LMS query is not properly set. Please revise terms and categories CQL request strings.'));
-          \Drupal::logger('emailservice')->warning($this->t('Wrong LMS query'));
+          \Drupal::messenger()->addError($this->t("@message", ["@message" => $e->getMessage()]));
+          \Drupal::logger('emailservice')->error($this->t("@message", ["@message" => $e->getMessage()]));
           $content = '';
         }
 

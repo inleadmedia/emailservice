@@ -223,6 +223,7 @@ class PeytzmailConnect {
       return $response->getBody()->getContents();
     }
     catch (ClientException $exception) {
+      \Drupal::messenger()->addError($exception->getMessage());
       \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
