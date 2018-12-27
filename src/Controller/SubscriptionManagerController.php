@@ -262,14 +262,14 @@ class SubscriptionManagerController extends ControllerBase {
           'mailinglist_id' => $mailing_list,
         ];
 
-        if (!empty($subscriber_data->total_records)) {
-          foreach ($subscriber_data->subscribers as $subscriber) {
-            if (in_array($mailing_list, $subscriber->mailinglist_ids)) {
+        if (!empty($subscriber_data['total_records'])) {
+          foreach ($subscriber_data['subscribers'] as $subscriber) {
+            if (in_array($mailing_list, $subscriber['mailinglist_ids'])) {
               $return['#subscriber_info'] += [
-                'id' => $subscriber->id,
-                'email' => $subscriber->email,
-                'types' => $subscriber->extra_fields->new_arrivals_types,
-                'categories' => $subscriber->extra_fields->new_arrivals_categories,
+                'id' => $subscriber['id'],
+                'email' => $subscriber['email'],
+                'types' => $subscriber['extra_fields']['new_arrivals_types'],
+                'categories' => $subscriber['extra_fields']['new_arrivals_categories'],
               ];
             }
           }
