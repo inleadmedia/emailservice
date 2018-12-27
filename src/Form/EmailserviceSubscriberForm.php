@@ -25,6 +25,8 @@ class EmailserviceSubscriberForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state, $subscriber_info = NULL, Node $node = NULL) {
     $buttons_color = $node->get('field_buttons_color')->color;
 
+    $form['#theme'] = 'emailservice_subscription_form';
+
     $form['mailinglist_id'] = [
       '#type' => 'hidden',
       '#value' => $subscriber_info['mailinglist_id'],
@@ -43,14 +45,7 @@ class EmailserviceSubscriberForm extends FormBase {
     ];
 
     $form['preferences_wrapper'] = [
-      '#prefix' => '<div class="card">',
-      '#suffix' => '</div>',
       '#type' => 'container',
-    ];
-
-    $form['preferences_wrapper']['title'] = [
-      '#type' => 'container',
-      '#markup' => '<div class="card-header">' . $this->t('Preferences') . '</div>',
     ];
 
     if (!empty($node)) {
@@ -60,8 +55,6 @@ class EmailserviceSubscriberForm extends FormBase {
       $types_data = $this->prepareOptionsList($taxonomy_types);
 
       $form['preferences_wrapper']['types'] = [
-        '#prefix' => '<div class="card-body"><div class="row"><div class="col-6">',
-        '#suffix' => '</div>',
         '#type' => 'checkboxes',
         '#id' => 'preference_types',
         '#title' => $this->t('Types of materials'),
@@ -79,8 +72,6 @@ class EmailserviceSubscriberForm extends FormBase {
       }
 
       $form['preferences_wrapper']['categories'] = [
-        '#prefix' => '<div class="col-6">',
-        '#suffix' => '</div></div>',
         '#type' => 'checkboxes',
         '#id' => 'preference_categories',
         '#title' => $this->t('Genre/Categories'),
@@ -90,10 +81,9 @@ class EmailserviceSubscriberForm extends FormBase {
         '#default_value' => !empty($subscriber_info['categories']) ? $subscriber_info['categories'] : [],
       ];
     }
+
     $form['preferences_wrapper']['actions'] = [
       '#type' => 'actions',
-      '#prefix' => '<div class="row mt-3"><div class="col-12">',
-      '#suffix' => '</div></div></div>',
     ];
 
     $form['preferences_wrapper']['actions']['subscribe'] = [

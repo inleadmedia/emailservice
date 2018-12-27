@@ -31,6 +31,10 @@ function emailservice_theme($existing, $type, $theme, $path) {
       'template' => 'emailservice-status-messages',
       'variables' => ['status_headings' => [], 'message_list' => NULL],
     ],
+    'emailservice_subscription_form' => [
+      'template' => 'emailservice-form',
+      'render element' => 'form',
+    ],
   ];
 }
 
@@ -79,10 +83,11 @@ function emailservice_preprocess_subscription_manager(&$variables) {
 
     $variables['headline_color'] = $node->get('field_headline_color')->color;
 
-
     $messages = \Drupal\Core\Render\Element\StatusMessages::renderMessages();
-    $messages['#theme'] = 'emailservice_status_messages';
-    $variables['messages'] = \Drupal::service('renderer')->render($messages);
+    if (!empty($messages)) {
+      $messages['#theme'] = 'emailservice_status_messages';
+      $variables['messages'] = \Drupal::service('renderer')->render($messages);
+    }
   }
 }
 
@@ -167,4 +172,25 @@ function emailservice_entity_type_alter(array &$entity_types) {
   $handlers = $entity_types['node']->get('handlers');
   $handlers['form']['edit'] = 'Drupal\emailservice\Form\SubscriptionNodeForm';
   $entity_types['node']->set('handlers', $handlers);
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function emailservice_preprocess_fieldset(&$variables) {
+  $element = $variables['element'];
+
+  if (isset($element['#description_display'])) {
+    if ($element['#description_display'] == 'before') {
+      $variables['description_before'] = TRUE;
+    }
+  }
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function emailservice_theme_registry_alter(&$theme_registry) {
+  $path = drupal_get_path('module', 'emailservice');
+  $theme_registry['fieldset']['path'] = $path . '/templates';
 }
