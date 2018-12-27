@@ -2,6 +2,7 @@
 
 namespace Drupal\emailservice;
 
+use Drupal\Component\Serialization\Json;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 
@@ -46,10 +47,10 @@ class PeytzmailConnect {
 
     try {
       $response = $this->request->get($uri, $options);
-      $result = json_decode($response->getBody()->getContents());
+      $result = JSON::decode($response->getBody()->getContents());
     }
     catch (ClientException $e) {
-      $response_body = json_decode($e->getResponse()->getBody()->getContents());
+      $response_body = JSON::decode($e->getResponse()->getBody()->getContents());
       if ($e->getCode() == '404' && $response_body->error == self::PEYTZMAIL_NOT_FOUND) {
         $result = ['No such user'];
       }
@@ -80,7 +81,7 @@ class PeytzmailConnect {
 
     try {
       $response = $this->request->post($uri, $options);
-      $result = json_decode($response->getBody()->getContents());
+      $result = JSON::decode($response->getBody()->getContents());
     }
     catch (ClientException $exception) {
       \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
@@ -104,7 +105,6 @@ class PeytzmailConnect {
    *   Response from service.
    */
   public function updateSubscriber(array $subscriber_data) {
-
     $api_token = $this->config->get('peytzmail_api_token');
 
     $options = [
@@ -117,18 +117,14 @@ class PeytzmailConnect {
 
     try {
       $response = $this->request->put($uri, $options);
-      $result = json_decode($response->getBody()->getContents());
+      $result = JSON::decode($response->getBody()->getContents());
     }
     catch (ClientException $exception) {
+      $result['exception_code'] = $exception->getCode();
       \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
 
-    $return_data = [
-      'code' => $response->getStatusCode(),
-      'result' => $result,
-    ];
-
-    return $return_data;
+    return $result;
   }
 
   /**
@@ -193,7 +189,7 @@ class PeytzmailConnect {
       \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
 
-    $result = json_decode($request->getBody()->getContents());
+    $result = JSON::decode($request->getBody()->getContents());
     return $result;
   }
 
@@ -224,6 +220,35 @@ class PeytzmailConnect {
     }
     catch (ClientException $exception) {
       \Drupal::messenger()->addError($exception->getMessage());
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+    }
+  }
+
+  /**
+   * Unsubscribe subscriber from mailinglist.
+   *
+   * @param string $mailinglist_id
+   *   Mailing list ID.
+   * @param string $subscriber_id
+   *   Subscriber ID.
+   *
+   * @return array
+   *   Result form service.
+   */
+  public function unsubscribe($mailinglist_id, $subscriber_id) {
+    $api_token = $this->config->get('peytzmail_api_token');
+    $options = [
+      'auth' => [$api_token, NULL],
+      'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
+    ];
+
+    $uri = '/api/v1/mailinglists/' . $mailinglist_id . '/subscribers/' . $subscriber_id;
+
+    try {
+      $response = $this->request->delete($uri, $options);
+      return JSON::decode($response->getBody()->getContents());
+    }
+    catch (ClientException $exception) {
       \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }

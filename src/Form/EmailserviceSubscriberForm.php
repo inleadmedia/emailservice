@@ -113,6 +113,7 @@ class EmailserviceSubscriberForm extends FormBase {
       $form['preferences_wrapper']['actions']['delete'] = [
         '#type' => 'submit',
         '#value' => $this->t('Unsubscribe all/Delete my profile'),
+        '#name' => 'unsubscribe',
         '#attributes' => [
           'class' => ['btn', 'btn-danger'],
         ],
@@ -132,6 +133,7 @@ class EmailserviceSubscriberForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $op = $form_state->getTriggeringElement();
     $data = [];
+    $message = '';
 
     $connect = new PeytzmailConnect();
     $subscriber_data = $form_state->get('subscriber_info');
@@ -146,11 +148,22 @@ class EmailserviceSubscriberForm extends FormBase {
       }
     }
 
+    if (empty($data['subscriber']['new_arrivals_categories'])) {
+      $data['subscriber']['new_arrivals_categories'] = [''];
+    }
+
     foreach ($raw_types as $key => $raw_type) {
       if (!empty($raw_type)) {
         $data['subscriber']['new_arrivals_types'][] = $raw_type;
       }
     }
+
+    if (empty($data['subscriber']['new_arrivals_types'])) {
+      $data['subscriber']['new_arrivals_types'] = [''];
+    }
+
+    $messenger = \Drupal::messenger();
+    $type = $messenger::TYPE_STATUS;
 
     $subscriber_data['subscriber'] = $data;
 
@@ -166,12 +179,23 @@ class EmailserviceSubscriberForm extends FormBase {
       $message = $this->t('You were successfully subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
     }
     elseif ($op['#name'] == 'update') {
-      $connect->updateSubscriber($subscriber_data);
-      $message = $this->t('Your subscription was successfully updated.');
+      $result = $connect->updateSubscriber($subscriber_data);
+      if (!empty($result['exception_code'])) {
+        $message = $this->t("Something went wrong. Your subscription wasn't updated.");
+        $type = $messenger::TYPE_WARNING;
+      }
+      else {
+        $message = $this->t('Your subscription was successfully updated.');
+      }
+    }
+    elseif ($op['#name'] == 'unsubscribe') {
+      $result = $connect->unsubscribe($form_data['mailinglist_id'], $subscriber_data['id']);
+      if ($result['result'] == 'ok') {
+        $message = $this->t('You were successfully unsubscribed.');
+      }
     }
 
-    $messenger = \Drupal::messenger();
-    $messenger->addStatus($message);
+    $messenger->addMessage($message, $type);
   }
 
   /**
