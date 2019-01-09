@@ -138,11 +138,11 @@ class PeytzmailConnect {
 
     foreach ($data as $field => $field_data) {
       $field_request_data = $this->getSubscriberFieldsData($field);
-      $original_set = $field_request_data->subscriber_field->selection_list;
+      $original_set = $field_request_data['subscriber_field']['selection_list'];
       $new_set = $field_data['selection_list'];
 
       $updated_set = array_merge($original_set, $new_set);
-      $field_request_data->subscriber_field->selection_list = $updated_set;
+      $field_request_data['subscriber_field']['selection_list'] = $updated_set;
 
       $set_for_send = json_encode($field_request_data);
 
