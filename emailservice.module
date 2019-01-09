@@ -109,7 +109,7 @@ function emailservice_type_terms_send(&$form, FormStateInterface $formState) {
   $remote_field_data = $connect->getSubscriberFieldsData('new_arrivals_types');
 
   if (!empty($remote_field_data)) {
-    $selection_list  = $remote_field_data->subscriber_field->selection_list;
+    $selection_list  = $remote_field_data['subscriber_field']['selection_list'];
 
     $term_value = $formState->getValue('name')[0]['value'];
     $term_key = preg_replace('@[^a-z0-9-]+@', '-', strtolower($term_value));
