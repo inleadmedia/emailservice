@@ -43,6 +43,9 @@ class SubscriptionManagerController extends ControllerBase {
       ->execute()
       ->fetchAll();
 
+    $node = Node::load($nid);
+    $item_url = $node->get('field_url_for_item_page')->value;
+
     $results = [];
     foreach ($materials as $material) {
       foreach ($categories as $category) {
@@ -62,12 +65,15 @@ class SubscriptionManagerController extends ControllerBase {
 
         $content = Json::decode($content);
 
-        $content = array_map(function ($object) use ($alias, $category) {
+        $content = array_map(function ($object) use ($alias, $category, $item_url) {
           $result_item = new \stdClass();
 
           $result_item->identifier = $object['id'];
 
           $result_item->title = $object['title'];
+          $result_item->type = $object['type'];
+          $result_item->url = $item_url . $object['id'];
+          $result_item->subject = $category->label;
 
           if (!empty($object['description'])) {
             $result_item->description = $object['description'];
