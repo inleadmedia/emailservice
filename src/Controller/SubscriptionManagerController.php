@@ -63,28 +63,30 @@ class SubscriptionManagerController extends ControllerBase {
         $content = Json::decode($content);
 
         $content = array_map(function ($object) use ($alias, $category) {
-          $object->identifier = $object->id;
-          unset($object->id);
+          $result_item = new \stdClass();
 
-          $object->creator = $object->author;
-          unset($object->author);
+          $result_item->identifier = $object['id'];
 
-          $object->date = $object->year;
-          unset($object->year);
+          $result_item->title = $object['title'];
 
-          unset($object->faustNumber);
-          unset($object->description);
-
-          if (!empty($object->cover)) {
-            $object->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object->cover;
+          if (!empty($object['description'])) {
+            $result_item->description = $object['description'];
           }
-          unset($object->cover);
 
-          $object->type_key = $this->filterPreference($object->type);
-          $object->subject_key = $alias . '_' . $this->filterPreference($category->label);
+          if (!empty($object['author'])) {
+            $result_item->creator = $object['author'];
+          }
 
+          $result_item->date = $object['year'];
 
-          return $object;
+          if (!empty($object['cover'])) {
+            $result_item->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object['cover'];
+          }
+
+          $result_item->type_key = $this->filterPreference($object['type']);
+          $result_item->subject_key = $alias . '_' . $this->filterPreference($category->label);
+
+          return $result_item;
         }, $content['objects']);
 
         $results = array_merge($results, $content);
