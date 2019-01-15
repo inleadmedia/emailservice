@@ -235,13 +235,21 @@ class SubscriptionManagerController extends ControllerBase {
 
   /**
    * Content.
+   *
+   * @param string $municipality
+   *  Municipality shortname.
+   *
+   * @return Response
+   *   Renderable page.
    */
   public function content() {
     $nids = NULL;
     $node = NULL;
     $valid_user = FALSE;
 
+    $municipality = \Drupal::request()->get('municipality');
     $params = \Drupal::request()->query->all();
+    $params['municipality'] = $municipality;
 
     $connect = new PeytzmailConnect();
 
