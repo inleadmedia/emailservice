@@ -234,7 +234,7 @@ class SubscriptionManagerController extends ControllerBase {
   }
 
   /**
-   * Content.
+   * Subscription page content.
    *
    * @param string $municipality
    *  Municipality shortname.
@@ -322,7 +322,8 @@ class SubscriptionManagerController extends ControllerBase {
     $loaded_user = User::load($user);
 
     $prefix = $loaded_user->get('field_alias')->value;
-    $machine_name = preg_replace('@[^a-z0-9-]+@', '-', strtolower($label));
+    $label = mb_strtolower($label, 'UTF-8');
+    $machine_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($label));
 
     return $prefix . '_' . $machine_name;
   }

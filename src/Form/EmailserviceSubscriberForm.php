@@ -113,6 +113,7 @@ class EmailserviceSubscriberForm extends FormBase {
     $form['#form'] = $form;
 
     $form_state->set('subscriber_info', $subscriber_info);
+    $form_state->set('alias', $node->getOwner()->get('field_alias')->value);
 
     return $form;
   }
@@ -127,20 +128,25 @@ class EmailserviceSubscriberForm extends FormBase {
 
     $connect = new PeytzmailConnect();
     $subscriber_data = $form_state->get('subscriber_info');
+    $alias = $form_state->get('alias');
 
     $form_data = $form_state->getValues();
     $raw_categories = $form_data['categories'];
     $raw_types = $form_data['types'];
 
-    foreach ($raw_categories as $key => $raw_category) {
-      if (!empty($raw_category)) {
-        $data['subscriber']['new_arrivals_categories'][] = $raw_category;
+    $subs_categories = [];
+    if (isset($subscriber_data['categories'])) {
+      $subs_categories = $subscriber_data['categories'];
+    }
+    else {
+      // If is not set categories array, make request to fetch from service.
+      $subscriber_data_remote = $connect->findSubscriber($form_data['email_address']);
+      foreach ($subscriber_data_remote['subscribers'] as $subscriber) {
+        $subs_categories = $subscriber["extra_fields"]["new_arrivals_categories"];
       }
     }
 
-    if (empty($data['subscriber']['new_arrivals_categories'])) {
-      $data['subscriber']['new_arrivals_categories'] = [''];
-    }
+    $data['subscriber']['new_arrivals_categories'] = $this->prepareCategories($alias, $raw_categories, $subs_categories);
 
     foreach ($raw_types as $key => $raw_type) {
       if (!empty($raw_type)) {
@@ -179,13 +185,73 @@ class EmailserviceSubscriberForm extends FormBase {
       }
     }
     elseif ($op['#name'] == 'unsubscribe') {
-      $result = $connect->unsubscribe($form_data['mailinglist_id'], $subscriber_data['id']);
+      $result = $connect->unsubscribe($form_data['mailinglist_id'], $subscriber_data['id'], $alias);
       if ($result['result'] == 'ok') {
+
+        // Delete preference categories on unsubscribe.
+        $new_subscriber_data = $connect->getSubscriber($subscriber_data['id']);
+        $categories = $new_subscriber_data['subscriber']['extra_fields']['new_arrivals_categories'];
+        foreach ($categories as $key => $category) {
+          if (strpos($category, $alias) !== FALSE) {
+            unset($categories[$key]);
+          }
+        }
+
+        if (empty($categories)) {
+          $categories = [''];
+        }
+
+        $new_subscriber_data['subscriber']['extra_fields']['new_arrivals_categories'] = $categories;
+        $subscriber_data_to_send['subscriber']['subscriber'] = $new_subscriber_data['subscriber']['extra_fields'];
+        $subscriber_data_to_send['id'] = $subscriber_data['id'];
+        $connect->updateSubscriber($subscriber_data_to_send);
+
         $message = $this->t('You were successfully unsubscribed.');
       }
     }
 
     $messenger->addMessage($message, $type);
+  }
+
+  /**
+   * Prepare categories to be pushed.
+   *
+   * @param string $alias
+   *   Current node owner's alias.
+   * @param array $raw_categories
+   *   Current form categories.
+   * @param array $remote_categories
+   *   Categories already present in subscriber's profile.
+   *
+   * @return array
+   *   List of categories prepared to be sent.
+   */
+  public function prepareCategories($alias, array $raw_categories, array $remote_categories = []) {
+    $selected_categories = [];
+    $other_nodes_categories = [];
+
+    if (!empty($remote_categories)) {
+      // Get current subscription categories from user data.
+      foreach ($remote_categories as $remote_category) {
+        if (strpos($remote_category, $alias) !== FALSE) {
+          $current_node_categories[] = $remote_category;
+        }
+        else {
+          $other_nodes_categories[] = $remote_category;
+        }
+      }
+    }
+
+    // Filter checked categories.
+    foreach ($raw_categories as $key => $raw_category) {
+      if (!empty($raw_category)) {
+        $selected_categories[] = $raw_category;
+      }
+    }
+
+    $categories = array_merge_recursive($other_nodes_categories, $selected_categories);
+
+    return $categories;
   }
 
   /**
@@ -200,7 +266,8 @@ class EmailserviceSubscriberForm extends FormBase {
   public function prepareOptionsList(array $terms) {
     $result = [];
     foreach ($terms as $term) {
-      $term_name = preg_replace('@[^a-z0-9-]+@', '-', strtolower($term->name));
+      $term_name = mb_strtolower($term->name, 'UTF-8');
+      $term_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
       $result[$term_name] = $term->name;
     }
     return $result;
