@@ -1,5 +1,5 @@
 emailservice.subscription_manager:
-  path: '/sm'
+  path: '/sm/{municipality}'
   defaults:
     _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::content'
     _title: 'Subscription manager'

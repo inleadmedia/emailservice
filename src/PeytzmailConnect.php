@@ -60,6 +60,34 @@ class PeytzmailConnect {
   }
 
   /**
+   * Get concrete subscriber info.
+   *
+   * @param string $subscriber_id
+   *   Subscriber id.
+   *
+   * @return array
+   *   Array with subscriber info.
+   */
+  public function getSubscriber($subscriber_id) {
+    $api_token = $this->config->get('peytzmail_api_token');
+
+    $options = [
+      'auth' => [$api_token, NULL],
+      'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
+    ];
+
+    $uri = '/api/v1/subscribers/' . $subscriber_id;
+
+    try {
+      $request = $this->request->get($uri, $options);
+      return JSON::decode($request->getBody()->getContents());
+    }
+    catch (ClientException $exception) {
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+    }
+  }
+
+  /**
    * Signup to mailinglist.
    *
    * @param array $data
@@ -138,11 +166,11 @@ class PeytzmailConnect {
 
     foreach ($data as $field => $field_data) {
       $field_request_data = $this->getSubscriberFieldsData($field);
-      $original_set = $field_request_data->subscriber_field->selection_list;
+      $original_set = $field_request_data['subscriber_field']['selection_list'];
       $new_set = $field_data['selection_list'];
 
       $updated_set = array_merge($original_set, $new_set);
-      $field_request_data->subscriber_field->selection_list = $updated_set;
+      $field_request_data['subscriber_field']['selection_list'] = $updated_set;
 
       $set_for_send = json_encode($field_request_data);
 
@@ -231,11 +259,13 @@ class PeytzmailConnect {
    *   Mailing list ID.
    * @param string $subscriber_id
    *   Subscriber ID.
+   * @param string $alias
+   *   Subscriber node alias.
    *
    * @return array
    *   Result form service.
    */
-  public function unsubscribe($mailinglist_id, $subscriber_id) {
+  public function unsubscribe($mailinglist_id, $subscriber_id, $alias) {
     $api_token = $this->config->get('peytzmail_api_token');
     $options = [
       'auth' => [$api_token, NULL],

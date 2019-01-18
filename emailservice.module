@@ -8,6 +8,8 @@
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultForbidden;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Path\AliasStorage;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ViewExecutable;
@@ -62,7 +64,7 @@ function emailservice_preprocess_subscription_manager(&$variables) {
     $variables['intro'] = $intro;
 
     // Processing types/categories fields values.
-    $fields = ['categories'=>'field_types_categories'];
+    $fields = ['categories' => 'field_types_categories'];
 
     foreach ($fields as $name => $field) {
       $getfield = $node->get($field)->getValue();
@@ -96,7 +98,7 @@ function emailservice_preprocess_subscription_manager(&$variables) {
  * Implements hook_form_alter().
  */
 function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  if ($form_id == 'taxonomy_term_types_materials_form' ) {
+  if ($form_id == 'taxonomy_term_types_materials_form') {
     foreach (array_keys($form['actions']) as $action) {
       if ($action != 'delete' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
         $form['actions']['submit']['#submit'][] = 'emailservice_type_terms_send';
@@ -110,10 +112,11 @@ function emailservice_type_terms_send(&$form, FormStateInterface $formState) {
   $remote_field_data = $connect->getSubscriberFieldsData('new_arrivals_types');
 
   if (!empty($remote_field_data)) {
-    $selection_list  = $remote_field_data->subscriber_field->selection_list;
+    $selection_list = $remote_field_data['subscriber_field']['selection_list'];
 
     $term_value = $formState->getValue('name')[0]['value'];
-    $term_key = preg_replace('@[^a-z0-9-]+@', '-', strtolower($term_value));
+    $term_value_enc = mb_strtolower($term_value, 'UTF-8');
+    $term_key = preg_replace('@[^-a-zæøå0-9-]+@', '-', $term_value_enc);
 
     $term_update = new stdClass();
     $term_update->key = $term_key;
@@ -207,9 +210,12 @@ function emailservice_cron() {
   $request_time = \Drupal::time()->getRequestTime();
 
   if ($request_time - $execution > $interval) {
-    \Drupal::logger('emailservice')->notice('Email service request to Peytz Mail ran.');
+    \Drupal::logger('emailservice')
+      ->notice('Email service request to Peytz Mail ran.');
 
-    $nids = \Drupal::entityQuery('node')->condition('type','subscription')->execute();
+    $nids = \Drupal::entityQuery('node')
+      ->condition('type', 'subscription')
+      ->execute();
     // Send request to peytz mail.
     foreach ($nids as $nid) {
       $manager = new SubscriptionManagerController();
@@ -217,5 +223,40 @@ function emailservice_cron() {
     }
 
     \Drupal::state()->set('emailservice.execution', $request_time);
+  }
+}
+/*
+ * Implements hook_ENTITY_TYPE_insert().
+ *
+ * Create node's path alias.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *
+ * @throws \Exception
+ */
+function emailservice_node_insert(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getType() == 'subscription') {
+    $alias_storage = new AliasStorage(Drupal::database(), \Drupal::moduleHandler());
+    $author_alias = $entity->getOwner()->field_alias->value;
+    $alias_storage->save(
+      '/sm/' . $author_alias,
+      '/' . $author_alias,
+      LanguageInterface::LANGCODE_NOT_SPECIFIED
+    );
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ *
+ * Delete node's path alias.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ */
+function emailservice_node_delete(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getType() == 'subscription') {
+    $alias_storage = new AliasStorage(Drupal::database(), \Drupal::moduleHandler());
+    $author_alias = $entity->getOwner()->field_alias->value;
+    $alias_storage->delete(['alias' => '/' . $author_alias]);
   }
 }

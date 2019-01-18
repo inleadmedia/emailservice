@@ -1,5 +1,8 @@
 <?php
 
+use Drupal\Core\Path\AliasStorage;
+use Drupal\node\Entity\Node;
+
 /**
  * @file
  */
@@ -62,4 +65,21 @@ function emailservice_schema() {
   ];
 
   return $schema;
+}
+
+/**
+ * Create path alias recursively for already existing nodes.
+ */
+function emailservice_update_8001() {
+  $alias_storage = new AliasStorage(\Drupal::database(), \Drupal::moduleHandler());
+  $nids = \Drupal::entityQuery('node')->condition('type','subscription')->execute();
+  $nodes =  Node::loadMultiple($nids);
+  foreach ($nodes as $node) {
+    $author_alias = $node->getOwner()->field_alias->value;
+    try {
+      $alias_storage->save('/sm/' . $author_alias, '/' . $author_alias);
+    } catch (Exception $e) {
+      echo $e;
+    }
+  }
 }

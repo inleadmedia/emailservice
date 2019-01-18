@@ -43,6 +43,9 @@ class SubscriptionManagerController extends ControllerBase {
       ->execute()
       ->fetchAll();
 
+    $node = Node::load($nid);
+    $item_url = $node->get('field_url_for_item_page')->value;
+
     $results = [];
     foreach ($materials as $material) {
       foreach ($categories as $category) {
@@ -62,29 +65,34 @@ class SubscriptionManagerController extends ControllerBase {
 
         $content = Json::decode($content);
 
-        $content = array_map(function ($object) use ($alias, $category) {
-          $object->identifier = $object->id;
-          unset($object->id);
+        $content = array_map(function ($object) use ($alias, $category, $item_url) {
+          $result_item = new \stdClass();
 
-          $object->creator = $object->author;
-          unset($object->author);
+          $result_item->identifier = $object['id'];
 
-          $object->date = $object->year;
-          unset($object->year);
+          $result_item->title = $object['title'];
+          $result_item->type = $object['type'];
+          $result_item->url = $item_url . $object['id'];
+          $result_item->subject = $category->label;
 
-          unset($object->faustNumber);
-          unset($object->description);
-
-          if (!empty($object->cover)) {
-            $object->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object->cover;
+          if (!empty($object['description'])) {
+            $result_item->description = $object['description'];
           }
-          unset($object->cover);
 
-          $object->type_key = $this->filterPreference($object->type);
-          $object->subject_key = $alias . '_' . $this->filterPreference($category->label);
+          if (!empty($object['author'])) {
+            $result_item->creator = $object['author'];
+          }
 
+          $result_item->date = $object['year'];
 
-          return $object;
+          if (!empty($object['cover'])) {
+            $result_item->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object['cover'];
+          }
+
+          $result_item->type_key = $this->filterPreference($object['type']);
+          $result_item->subject_key = $alias . '_' . $this->filterPreference($category->label);
+
+          return $result_item;
         }, $content['objects']);
 
         $results = array_merge($results, $content);
@@ -226,14 +234,22 @@ class SubscriptionManagerController extends ControllerBase {
   }
 
   /**
-   * Content.
+   * Subscription page content.
+   *
+   * @param string $municipality
+   *  Municipality shortname.
+   *
+   * @return Response
+   *   Renderable page.
    */
   public function content() {
     $nids = NULL;
     $node = NULL;
     $valid_user = FALSE;
 
+    $municipality = \Drupal::request()->get('municipality');
     $params = \Drupal::request()->query->all();
+    $params['municipality'] = $municipality;
 
     $connect = new PeytzmailConnect();
 
@@ -306,7 +322,8 @@ class SubscriptionManagerController extends ControllerBase {
     $loaded_user = User::load($user);
 
     $prefix = $loaded_user->get('field_alias')->value;
-    $machine_name = preg_replace('@[^a-z0-9-]+@', '-', strtolower($label));
+    $label = mb_strtolower($label, 'UTF-8');
+    $machine_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($label));
 
     return $prefix . '_' . $machine_name;
   }
