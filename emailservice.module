@@ -13,6 +13,7 @@ use Drupal\Core\Path\AliasStorage;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ViewExecutable;
+use Drupal\emailservice\Controller\SubscriptionManagerController;
 
 /**
  * Implements hook_theme().
@@ -199,6 +200,32 @@ function emailservice_theme_registry_alter(&$theme_registry) {
 }
 
 /**
+ * Implements hook_cron().
+ */
+function emailservice_cron() {
+  // Ensure that request is sent once in a week.
+  $interval = 7 * 24 * 60 * 60;
+
+  $execution = \Drupal::state()->get('emailservice.execution', 0);
+  $request_time = \Drupal::time()->getRequestTime();
+
+  if ($request_time - $execution > $interval) {
+    \Drupal::logger('emailservice')
+      ->notice('Email service request to Peytz Mail ran.');
+
+    $nids = \Drupal::entityQuery('node')
+      ->condition('type', 'subscription')
+      ->execute();
+    // Send request to peytz mail.
+    foreach ($nids as $nid) {
+      $manager = new SubscriptionManagerController();
+      $manager->sendNewsletter($nid);
+    }
+
+    \Drupal::state()->set('emailservice.execution', $request_time);
+  }
+}
+/*
  * Implements hook_ENTITY_TYPE_insert().
  *
  * Create node's path alias.
