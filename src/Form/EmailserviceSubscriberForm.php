@@ -44,6 +44,29 @@ class EmailserviceSubscriberForm extends FormBase {
       ],
     ];
 
+    $form['first_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('First Name'),
+      '#default_value' => !empty($subscriber_info['first_name']) ? $subscriber_info['first_name'] : '',
+      '#required' => TRUE,
+      '#attributes' => [
+        'placeholder' => $this->t('Type in the first name.'),
+        'class' => ['form-control'],
+        'autocomplete' => "off",
+      ],
+    ];
+
+    $form['last_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Last Name'),
+      '#default_value' => !empty($subscriber_info['last_name']) ? $subscriber_info['last_name'] : '',
+      '#required' => TRUE,
+      '#attributes' => [
+        'placeholder' => $this->t('Type in the last name.'),
+        'class' => ['form-control'],
+        'autocomplete' => "off",
+      ],
+    ];
     $form['preferences_wrapper'] = [
       '#type' => 'container',
     ];
@@ -146,7 +169,7 @@ class EmailserviceSubscriberForm extends FormBase {
       }
     }
 
-    $data['subscriber']['new_arrivals_categories'] = $this->prepareCategories($alias, $raw_categories, $subs_categories);
+//    $data['subscriber']['new_arrivals_categories'] = $this->prepareCategories($alias, $raw_categories, $subs_categories);
 
     foreach ($raw_types as $key => $raw_type) {
       if (!empty($raw_type)) {
@@ -168,6 +191,8 @@ class EmailserviceSubscriberForm extends FormBase {
         'mailinglist_ids' => [$form_data['mailinglist_id']],
         'subscriber' => [
           'email' => $form_data['email_address'],
+          'first_name' => $form_data['first_name'],
+          'last_name' => $form_data['last_name'],
         ] + $data['subscriber'],
       ];
 
@@ -175,6 +200,8 @@ class EmailserviceSubscriberForm extends FormBase {
       $message = $this->t('You were successfully subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
     }
     elseif ($op['#name'] == 'update') {
+      $subscriber_data['subscriber']['first_name'] = $form_data['first_name'];
+      $subscriber_data['subscriber']['last_name'] = $form_data['last_name'];
       $result = $connect->updateSubscriber($subscriber_data);
       if (!empty($result['exception_code'])) {
         $message = $this->t("Something went wrong. Your subscription wasn't updated.");
