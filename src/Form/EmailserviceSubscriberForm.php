@@ -169,7 +169,7 @@ class EmailserviceSubscriberForm extends FormBase {
       }
     }
 
-//    $data['subscriber']['new_arrivals_categories'] = $this->prepareCategories($alias, $raw_categories, $subs_categories);
+    $data['subscriber']['new_arrivals_categories'] = $this->prepareCategories($alias, $raw_categories, $subs_categories);
 
     foreach ($raw_types as $key => $raw_type) {
       if (!empty($raw_type)) {
