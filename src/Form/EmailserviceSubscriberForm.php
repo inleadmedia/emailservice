@@ -200,8 +200,9 @@ class EmailserviceSubscriberForm extends FormBase {
       $message = $this->t('You were successfully subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
     }
     elseif ($op['#name'] == 'update') {
-      $subscriber_data['subscriber']['first_name'] = $form_data['first_name'];
-      $subscriber_data['subscriber']['last_name'] = $form_data['last_name'];
+      $subscriber_data['subscriber']['subscriber']['email'] = $form_data['email_address'];
+      $subscriber_data['subscriber']['subscriber']['first_name'] = $form_data['first_name'];
+      $subscriber_data['subscriber']['subscriber']['last_name'] = $form_data['last_name'];
       $result = $connect->updateSubscriber($subscriber_data);
       if (!empty($result['exception_code'])) {
         $message = $this->t("Something went wrong. Your subscription wasn't updated.");

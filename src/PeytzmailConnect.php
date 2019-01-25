@@ -140,8 +140,6 @@ class PeytzmailConnect {
       'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
       'body' => json_encode($subscriber_data['subscriber']),
     ];
-    var_dump($options);
-    exit();
     $uri = '/api/v1/subscribers/' . $subscriber_data['id'];
     try {
       $response = $this->request->put($uri, $options);
