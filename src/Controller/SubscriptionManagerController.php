@@ -236,11 +236,10 @@ class SubscriptionManagerController extends ControllerBase {
   /**
    * Subscription page content.
    *
-   * @param string $municipality
-   *  Municipality shortname.
-   *
-   * @return Response
+   * @return \Symfony\Component\HttpFoundation\Response
    *   Renderable page.
+   *
+   * @throws \Exception
    */
   public function content() {
     $nids = NULL;
@@ -313,19 +312,40 @@ class SubscriptionManagerController extends ControllerBase {
    *   Node on which we are acting.
    * @param string $label
    *   The label of preference which have to be added.
+   * @param int $tid
+   *   Term id.
    *
    * @return string
    *   Generated machine name for category key.
    */
-  public function generateMachineName($node, $label) {
+  public function generateMachineName($node, $label, $tid) {
     $user = $node->get('uid')->target_id;
     $loaded_user = User::load($user);
 
     $prefix = $loaded_user->get('field_alias')->value;
-    $label = mb_strtolower($label, 'UTF-8');
-    $machine_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($label));
 
-    return $prefix . '_' . $machine_name;
+    $term = Term::load($tid);
+    $material_type = self::lowerDanishTerms($term->getName());
+
+    $machine_name = self::lowerDanishTerms($label);
+
+    return $prefix . '_' . $material_type . '-' . $machine_name;
+  }
+
+  /**
+   * Lowerize words.
+   *
+   * @param string $term
+   *   String to be lowerized.
+   *
+   * @return string|string[]|null
+   *   Lowerized string.
+   */
+  public static function lowerDanishTerms(string $term) {
+    $term_name = mb_strtolower($term, 'UTF-8');
+    return preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
   }
 
 }
+
+

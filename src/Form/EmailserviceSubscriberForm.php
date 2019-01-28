@@ -4,6 +4,7 @@ namespace Drupal\emailservice\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\emailservice\Controller\SubscriptionManagerController;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
@@ -61,7 +62,7 @@ class EmailserviceSubscriberForm extends FormBase {
 
         $category_options = [];
         foreach ($grouped_category as $item) {
-          $category_options[$this->lowerDanishTerms($type_name) . ':' . $item['machine_name']] = $item['label'];
+          $category_options[$item['machine_name']] = $item['label'];
         }
 
         $form['preferences_wrapper']['categories']['category_' . $tid] = [
@@ -119,6 +120,8 @@ class EmailserviceSubscriberForm extends FormBase {
     $op = $form_state->getTriggeringElement();
     $data = [];
     $message = '';
+    $raw_types = [];
+    $raw_categories = [];
 
     $connect = new PeytzmailConnect();
     $subscriber_data = $form_state->get('subscriber_info');
@@ -131,9 +134,10 @@ class EmailserviceSubscriberForm extends FormBase {
         foreach ($form_datum as $i => $item) {
           $raw_categories[$i] = $item;
 
-          $explode = explode(':', $item);
+          $first_level = explode('_', $item);
+          $second_level = explode('-', $first_level[1]);
           if (!empty($item)) {
-            $raw_types[$explode[0]] = $explode[0];
+            $raw_types[$second_level[0]] = $second_level[0];
           }
         }
       }
@@ -260,36 +264,6 @@ class EmailserviceSubscriberForm extends FormBase {
   }
 
   /**
-   * Generate options list.
-   *
-   * @param array $terms
-   *   Array of terms.
-   *
-   * @return array
-   *   Options list.
-   */
-  public function prepareOptionsList(array $terms) {
-    $result = [];
-    foreach ($terms as $term) {
-//      $term_name = mb_strtolower($term->name, 'UTF-8');
-//      $term_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
-//      $result[$term_name] = $term->name;
-      $result[$this->lowerDanishTerms($term->name)] = $term->name;
-    }
-    return $result;
-  }
-
-  /**
-   * @param string $term
-   *
-   * @return string|string[]|null
-   */
-  public function lowerDanishTerms(string $term) {
-    $term_name = mb_strtolower($term, 'UTF-8');
-    return preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
-  }
-
-  /**
    * Group categories by type.
    *
    * @param array $items
@@ -302,7 +276,6 @@ class EmailserviceSubscriberForm extends FormBase {
     $templevel = 0;
     $newkey = 0;
     $grouparr = [];
-//    $grouparr[$templevel] = "";
 
     foreach ($items as $key => $val) {
       if ($templevel == $val['material_tid']) {

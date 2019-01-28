@@ -117,7 +117,7 @@ class PreferencesSetFieldType extends FieldItemBase {
    */
   public function preSave() {
     $machine_name = new SubscriptionManagerController();
-    $machine_name = $machine_name->generateMachineName($this->getEntity(), $this->getValue()['label']);
+    $machine_name = $machine_name->generateMachineName($this->getEntity(), $this->getValue()['label'], $this->getValue()['material_tid']);
     $this->set('machine_name', $machine_name);
   }
 
