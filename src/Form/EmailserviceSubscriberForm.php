@@ -6,6 +6,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
+use Drupal\taxonomy\Entity\Term;
 
 /**
  * Class EmailserviceSubscriberForm.
@@ -49,37 +50,30 @@ class EmailserviceSubscriberForm extends FormBase {
     ];
 
     if (!empty($node)) {
-      $types_vocabulary = 'types_materials';
-      $taxonomy_types = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($types_vocabulary);
-
-      $types_data = $this->prepareOptionsList($taxonomy_types);
-
-      $form['preferences_wrapper']['types'] = [
-        '#type' => 'checkboxes',
-        '#id' => 'preference_types',
-        '#title' => $this->t('Types of materials'),
-        '#description' => $this->t('Choose the material types you are interested in:'),
-        '#description_display' => 'before',
-        '#options' => $types_data,
-        '#default_value' => !empty($subscriber_info['types']) ? $subscriber_info['types'] : [],
-      ];
-
       $node_field_categories = $node->get('field_types_categories')->getValue();
-      $category_options = [];
 
-      foreach ($node_field_categories as $node_field_category) {
-        $category_options[$node_field_category['machine_name']] = $node_field_category['label'];
+      // Extract material types groups.
+      $grouped_categories = $this->groupCategories($node_field_categories);
+
+      foreach ($grouped_categories as $tid => $grouped_category) {
+        $term = Term::load($tid);
+        $type_name = $term->getName();
+
+        $category_options = [];
+        foreach ($grouped_category as $item) {
+          $category_options[$this->lowerDanishTerms($type_name) . ':' . $item['machine_name']] = $item['label'];
+        }
+
+        $form['preferences_wrapper']['categories']['category_' . $tid] = [
+          '#prefix' => '<div class="col-sm-4">',
+          '#suffix' => '</div>',
+          '#type' => 'checkboxes',
+          '#id' => 'preference_categories',
+          '#title' => "<h5>" . $type_name . "</h5>",
+          '#options' => $category_options,
+          '#default_value' => !empty($subscriber_info['categories']) ? $subscriber_info['categories'] : [],
+        ];
       }
-
-      $form['preferences_wrapper']['categories'] = [
-        '#type' => 'checkboxes',
-        '#id' => 'preference_categories',
-        '#title' => $this->t('Genre/Categories'),
-        '#description' => $this->t('Choose the categories you are interested in:'),
-        '#description_display' => 'before',
-        '#options' => $category_options,
-        '#default_value' => !empty($subscriber_info['categories']) ? $subscriber_info['categories'] : [],
-      ];
     }
 
     $form['preferences_wrapper']['actions'] = [
@@ -131,8 +125,19 @@ class EmailserviceSubscriberForm extends FormBase {
     $alias = $form_state->get('alias');
 
     $form_data = $form_state->getValues();
-    $raw_categories = $form_data['categories'];
-    $raw_types = $form_data['types'];
+
+    foreach ($form_data as $key => $form_datum) {
+      if (strpos($key, 'category') !== FALSE) {
+        foreach ($form_datum as $i => $item) {
+          $raw_categories[$i] = $item;
+
+          $explode = explode(':', $item);
+          if (!empty($item)) {
+            $raw_types[$explode[0]] = $explode[0];
+          }
+        }
+      }
+    }
 
     $subs_categories = [];
     if (isset($subscriber_data['categories'])) {
@@ -266,11 +271,49 @@ class EmailserviceSubscriberForm extends FormBase {
   public function prepareOptionsList(array $terms) {
     $result = [];
     foreach ($terms as $term) {
-      $term_name = mb_strtolower($term->name, 'UTF-8');
-      $term_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
-      $result[$term_name] = $term->name;
+//      $term_name = mb_strtolower($term->name, 'UTF-8');
+//      $term_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
+//      $result[$term_name] = $term->name;
+      $result[$this->lowerDanishTerms($term->name)] = $term->name;
     }
     return $result;
+  }
+
+  /**
+   * @param string $term
+   *
+   * @return string|string[]|null
+   */
+  public function lowerDanishTerms(string $term) {
+    $term_name = mb_strtolower($term, 'UTF-8');
+    return preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
+  }
+
+  /**
+   * Group categories by type.
+   *
+   * @param array $items
+   *   Array of categories.
+   *
+   * @return array
+   *   Grouped array.
+   */
+  public function groupCategories(array $items) {
+    $templevel = 0;
+    $newkey = 0;
+    $grouparr = [];
+//    $grouparr[$templevel] = "";
+
+    foreach ($items as $key => $val) {
+      if ($templevel == $val['material_tid']) {
+        $grouparr[$templevel][$newkey] = $val;
+      }
+      else {
+        $grouparr[$val['material_tid']][$newkey] = $val;
+      }
+      $newkey++;
+    }
+    return $grouparr;
   }
 
 }

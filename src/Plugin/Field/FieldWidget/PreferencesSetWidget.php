@@ -76,6 +76,21 @@ class PreferencesSetWidget extends WidgetBase {
       '#default_value' => isset($item->status) ? $item->status : 1,
     ];
 
+    $options = [];
+    $vid = 'types_materials';
+    $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid);
+    foreach ($terms as $term) {
+      $options[$term->tid] = $term->name;
+    }
+
+    $element['material_tid'] = [
+      '#type' => 'select',
+      '#title' => t('Related material type'),
+      '#empty_option' => t('Choose type'),
+      '#options' => $options,
+      '#default_value' => isset($item->material_tid) ? $item->material_tid : '',
+    ];
+
     return $element;
   }
 

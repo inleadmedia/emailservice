@@ -47,6 +47,12 @@ function emailservice_schema() {
         'not null' => TRUE,
         'default' => '',
       ],
+      'material_tid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
       'status' => [
         'type' => 'int',
         'not null' => TRUE,
@@ -82,4 +88,21 @@ function emailservice_update_8001() {
       echo $e;
     }
   }
+}
+
+/**
+ * Add new column into database.
+ *
+ * @return \Drupal\Core\Database\Schema
+ */
+function emailservice_update_8002() {
+  $spec = array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'unsigned' => TRUE,
+    'default' => 0,
+  );
+  $schema = \Drupal::database()->schema();
+  $schema->addField('emailservice_preferences_mapping', 'material_tid', $spec);
+  return $schema;
 }
