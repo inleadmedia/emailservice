@@ -140,9 +140,7 @@ class PeytzmailConnect {
       'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
       'body' => json_encode($subscriber_data['subscriber']),
     ];
-
     $uri = '/api/v1/subscribers/' . $subscriber_data['id'];
-
     try {
       $response = $this->request->put($uri, $options);
       $result = JSON::decode($response->getBody()->getContents());
@@ -151,6 +149,7 @@ class PeytzmailConnect {
       $result['exception_code'] = $exception->getCode();
       \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
+
 
     return $result;
   }

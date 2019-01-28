@@ -284,6 +284,8 @@ class SubscriptionManagerController extends ControllerBase {
               $return['#subscriber_info'] += [
                 'id' => $subscriber['id'],
                 'email' => $subscriber['email'],
+                'first_name' => $subscriber['first_name'],
+                'last_name' => $subscriber['last_name'],
                 'types' => $subscriber['extra_fields']['new_arrivals_types'],
                 'categories' => $subscriber['extra_fields']['new_arrivals_categories'],
               ];
