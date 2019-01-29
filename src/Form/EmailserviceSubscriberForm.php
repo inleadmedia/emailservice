@@ -4,7 +4,6 @@ namespace Drupal\emailservice\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\emailservice\Controller\SubscriptionManagerController;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;

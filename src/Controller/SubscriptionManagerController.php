@@ -32,11 +32,19 @@ class SubscriptionManagerController extends ControllerBase {
   private function lmsRequest(string $nid, string $alias) {
     $url = \Drupal::config('lms.config')->get('lms_api_url');
 
-    $types_vocabulary = 'types_materials';
-    $materials = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($types_vocabulary);
+    $registered_materials = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
+      ->fields('epm', ['material_tid'])
+      ->condition('status', 1)
+      ->execute()
+      ->fetchAll();
+
+    $materials = [];
+    foreach ($registered_materials as $registered_material) {
+      $materials[$registered_material->material_tid] = $registered_material->material_tid;
+    }
 
     $categories = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
-      ->fields('epm', ['cql_query', 'label'])
+      ->fields('epm', ['cql_query', 'label', 'machine_name'])
       ->condition('epm.entity_id', $nid)
       ->condition('epm.preference_type', 'field_types_categories')
       ->condition('epm.status', 1)
@@ -49,7 +57,7 @@ class SubscriptionManagerController extends ControllerBase {
     $results = [];
     foreach ($materials as $material) {
       foreach ($categories as $category) {
-        $term = Term::load($material->tid);
+        $term = Term::load($material);
         $type = $term->get('field_types_cql_query')->value;
         $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
         $uri = $url . $alias . $query;
@@ -90,7 +98,7 @@ class SubscriptionManagerController extends ControllerBase {
           }
 
           $result_item->type_key = $this->filterPreference($object['type']);
-          $result_item->subject_key = $alias . '_' . $this->filterPreference($category->label);
+          $result_item->subject_key = $category->machine_name;
 
           return $result_item;
         }, $content['objects']);
