@@ -36,7 +36,7 @@ class SubscriptionNodeForm extends NodeForm {
 
           if ($field_value['machine_name'] == 'stub' && !empty($field_value['label'])) {
             $machine_name = new SubscriptionManagerController();
-            $machine_name = $machine_name->generateMachineName($node, $field_value['label']);
+            $machine_name = $machine_name->generateMachineName($node, $field_value['label'], $field_value['material_tid']);
             $field_value['machine_name'] = $machine_name;
           }
 

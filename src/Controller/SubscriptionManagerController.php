@@ -32,11 +32,19 @@ class SubscriptionManagerController extends ControllerBase {
   private function lmsRequest(string $nid, string $alias) {
     $url = \Drupal::config('lms.config')->get('lms_api_url');
 
-    $types_vocabulary = 'types_materials';
-    $materials = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($types_vocabulary);
+    $registered_materials = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
+      ->fields('epm', ['material_tid'])
+      ->condition('status', 1)
+      ->execute()
+      ->fetchAll();
+
+    $materials = [];
+    foreach ($registered_materials as $registered_material) {
+      $materials[$registered_material->material_tid] = $registered_material->material_tid;
+    }
 
     $categories = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
-      ->fields('epm', ['cql_query', 'label'])
+      ->fields('epm', ['cql_query', 'label', 'machine_name'])
       ->condition('epm.entity_id', $nid)
       ->condition('epm.preference_type', 'field_types_categories')
       ->condition('epm.status', 1)
@@ -49,7 +57,7 @@ class SubscriptionManagerController extends ControllerBase {
     $results = [];
     foreach ($materials as $material) {
       foreach ($categories as $category) {
-        $term = Term::load($material->tid);
+        $term = Term::load($material);
         $type = $term->get('field_types_cql_query')->value;
         $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
         $uri = $url . $alias . $query;
@@ -90,7 +98,7 @@ class SubscriptionManagerController extends ControllerBase {
           }
 
           $result_item->type_key = $this->filterPreference($object['type']);
-          $result_item->subject_key = $alias . '_' . $this->filterPreference($category->label);
+          $result_item->subject_key = $category->machine_name;
 
           return $result_item;
         }, $content['objects']);
@@ -236,11 +244,10 @@ class SubscriptionManagerController extends ControllerBase {
   /**
    * Subscription page content.
    *
-   * @param string $municipality
-   *  Municipality shortname.
-   *
-   * @return Response
+   * @return \Symfony\Component\HttpFoundation\Response
    *   Renderable page.
+   *
+   * @throws \Exception
    */
   public function content() {
     $nids = NULL;
@@ -315,19 +322,40 @@ class SubscriptionManagerController extends ControllerBase {
    *   Node on which we are acting.
    * @param string $label
    *   The label of preference which have to be added.
+   * @param int $tid
+   *   Term id.
    *
    * @return string
    *   Generated machine name for category key.
    */
-  public function generateMachineName($node, $label) {
+  public function generateMachineName($node, $label, $tid) {
     $user = $node->get('uid')->target_id;
     $loaded_user = User::load($user);
 
     $prefix = $loaded_user->get('field_alias')->value;
-    $label = mb_strtolower($label, 'UTF-8');
-    $machine_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($label));
 
-    return $prefix . '_' . $machine_name;
+    $term = Term::load($tid);
+    $material_type = self::lowerDanishTerms($term->getName());
+
+    $machine_name = self::lowerDanishTerms($label);
+
+    return $prefix . '_' . $material_type . '-' . $machine_name;
+  }
+
+  /**
+   * Lowerize words.
+   *
+   * @param string $term
+   *   String to be lowerized.
+   *
+   * @return string|string[]|null
+   *   Lowerized string.
+   */
+  public static function lowerDanishTerms(string $term) {
+    $term_name = mb_strtolower($term, 'UTF-8');
+    return preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
   }
 
 }
+
+
