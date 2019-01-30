@@ -37,6 +37,7 @@ class EmailserviceSubscriberForm extends FormBase {
       '#title' => $this->t('Email address'),
       '#default_value' => !empty($subscriber_info['email']) ? $subscriber_info['email'] : '',
       '#required' => TRUE,
+      '#maxlength' => 254,
       '#attributes' => [
         'placeholder' => $this->t('Type in the email address you wish to use.'),
         'class' => ['form-control'],
@@ -139,6 +140,22 @@ class EmailserviceSubscriberForm extends FormBase {
     $form_state->set('alias', $node->getOwner()->get('field_alias')->value);
 
     return $form;
+  }
+
+  /**
+   * Form validator.
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    $email_address = $form_state->getValue('email_address');
+
+    $connect = new PeytzmailConnect();
+
+    $request = $connect->findSubscriber($email_address);
+
+    if (empty($request['subscribers'])) {
+      $message = $this->t('%email_address is an invalid email address.', ['%email_address' => $email_address]);
+      $form_state->setErrorByName('email_address', $message);
+    }
   }
 
   /**
