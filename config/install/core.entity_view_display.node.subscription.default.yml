@@ -7,11 +7,13 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
+    - field.field.node.subscription.field_shared_secret_key
     - field.field.node.subscription.field_types_categories
-    - field.field.node.subscription.field_types_materials
     - field.field.node.subscription.field_url_for_item_page
+    - image.style.large
     - node.type.subscription
   module:
+    - color_field
     - emailservice
     - image
     - user
@@ -20,43 +22,74 @@ targetEntityType: node
 bundle: subscription
 mode: default
 content:
+  field_buttons_color:
+    type: color_field_formatter_text
+    weight: 6
+    region: content
+    label: inline
+    settings:
+      format: hex
+      opacity: '1'
+    third_party_settings: {  }
+  field_headline_color:
+    type: color_field_formatter_text
+    weight: 5
+    region: content
+    label: inline
+    settings:
+      format: hex
+      opacity: '1'
+    third_party_settings: {  }
   field_intro_text:
-    weight: 2
-    label: hidden
+    weight: 1
+    label: above
     settings: {  }
     third_party_settings: {  }
     type: basic_string
     region: content
   field_logo:
-    weight: 1
+    weight: 0
     label: hidden
     settings:
-      image_style: ''
+      image_style: large
       image_link: ''
     third_party_settings: {  }
     type: image
     region: content
-  field_types_categories:
-    weight: 5
-    label: above
-    settings: {  }
-    third_party_settings: {  }
-    type: preferences_set_formatter
-    region: content
-  field_types_materials:
+  field_mailing_list_id:
+    type: string
     weight: 4
+    region: content
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  field_shared_secret_key:
+    weight: 9
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: salt_formatter_type
+    region: content
+  field_types_categories:
+    weight: 3
     label: above
     settings: {  }
     third_party_settings: {  }
     type: preferences_set_formatter
     region: content
+  field_url_for_item_page:
+    type: string
+    weight: 7
+    region: content
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
   links:
-    weight: 0
+    weight: 8
     region: content
     settings: {  }
     third_party_settings: {  }
 hidden:
-  field_buttons_color: true
-  field_headline_color: true
-  field_mailing_list_id: true
-  field_url_for_item_page: true
+  langcode: true

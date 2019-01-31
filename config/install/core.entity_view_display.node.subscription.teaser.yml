@@ -9,27 +9,67 @@ dependencies:
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
     - field.field.node.subscription.field_types_categories
-    - field.field.node.subscription.field_types_materials
     - field.field.node.subscription.field_url_for_item_page
+    - image.style.thumbnail
     - node.type.subscription
   module:
+    - color_field
+    - image
     - user
 id: node.subscription.teaser
 targetEntityType: node
 bundle: subscription
 mode: teaser
 content:
+  field_buttons_color:
+    type: color_field_formatter_text
+    weight: 2
+    region: content
+    label: inline
+    settings:
+      format: hex
+      opacity: '1'
+    third_party_settings: {  }
+  field_headline_color:
+    type: color_field_formatter_text
+    weight: 1
+    region: content
+    label: inline
+    settings:
+      format: hex
+      opacity: '1'
+    third_party_settings: {  }
+  field_logo:
+    type: image
+    weight: 0
+    region: content
+    label: hidden
+    settings:
+      image_style: thumbnail
+      image_link: ''
+    third_party_settings: {  }
+  field_mailing_list_id:
+    type: string
+    weight: 4
+    region: content
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  field_url_for_item_page:
+    type: string
+    weight: 3
+    region: content
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
   links:
-    weight: 100
+    weight: 5
+    region: content
     settings: {  }
     third_party_settings: {  }
-    region: content
 hidden:
-  field_buttons_color: true
-  field_headline_color: true
   field_intro_text: true
-  field_logo: true
-  field_mailing_list_id: true
   field_types_categories: true
-  field_types_materials: true
-  field_url_for_item_page: true
+  langcode: true

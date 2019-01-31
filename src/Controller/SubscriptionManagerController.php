@@ -3,6 +3,8 @@
 namespace Drupal\emailservice\Controller;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
@@ -257,6 +259,8 @@ class SubscriptionManagerController extends ControllerBase {
     $municipality = \Drupal::request()->get('municipality');
     $params = \Drupal::request()->query->all();
     $params['municipality'] = $municipality;
+    $email_parameter = $params['email'];
+    $cs_parameter = $params['cs'];
 
     $connect = new PeytzmailConnect();
 
@@ -279,6 +283,20 @@ class SubscriptionManagerController extends ControllerBase {
         ->execute();
 
       $node = Node::load(reset($nids));
+
+      $params['is_allowed'] = FALSE;
+
+      if (isset($email_parameter) && isset($cs_parameter)) {
+        $shared_secret_key = $node->get('field_shared_secret_key')->value;
+
+        $prepare_string = $email_parameter . $shared_secret_key;
+
+        $control_cs = hash('sha256', $prepare_string);
+
+        if ($cs_parameter == $control_cs) {
+          $params['is_allowed'] = TRUE;
+        }
+      }
       if (!empty($node)) {
         $mailing_list = $node->get('field_mailing_list_id')->value;
         $return['#subscriber_info'] = [
@@ -356,6 +374,36 @@ class SubscriptionManagerController extends ControllerBase {
     return preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
   }
 
+  /**
+   * Generate salt.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   Return ajax response with replacement value for form field.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  public function generateSalt() {
+    $response = new AjaxResponse();
+
+    $values = array('type' => 'subscription');
+
+    $node = \Drupal::entityTypeManager()
+      ->getStorage('node')
+      ->create($values);
+
+    $form = \Drupal::entityTypeManager()
+      ->getFormObject('node', 'default')
+      ->setEntity($node);
+    $form = \Drupal::formBuilder()->getForm($form);
+
+    $value = bin2hex(random_bytes(24));
+    $element = $form["field_shared_secret_key"];
+    $element['widget'][0]["value"]["#value"] = $value;
+
+    $response->addCommand(new ReplaceCommand('#emailservice_salt_field', $element['widget'][0]['value']));
+
+    return $response;
+  }
+
 }
-
-
