@@ -6,7 +6,7 @@ dependencies:
     - color_field
     - node
 _core:
-  default_config_hash: ahxC3zMGiccOHiDCBiCrVJi3eaAojD4xZR6EaSNmlNc
+  default_config_hash: WX1BB6D6n4QCft3DBHAOxjsTciH0wpUag75eF1bu5c4
 id: node.field_headline_color
 field_name: field_headline_color
 entity_type: node
