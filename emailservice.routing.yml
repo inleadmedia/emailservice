@@ -33,3 +33,11 @@ emailservice.newsletter:
     _title: 'Send Newsletter'
   requirements:
     _permission: 'access content'
+
+emailservice.generate_salt:
+  path: '/generate-salt'
+  defaults:
+    _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::generateSalt'
+    _title: 'Generate salt'
+  requirements:
+    _permission: 'access content'

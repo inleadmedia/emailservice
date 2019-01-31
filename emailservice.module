@@ -48,6 +48,9 @@ function emailservice_preprocess_subscription_manager(&$variables) {
   if (!empty($variables['node'])) {
     $node = $variables['node'];
 
+    $title = $node->getTitle();
+    $variables['title'] = $title;
+
     // Process logo output.
     $logo_array = $node->get('field_logo')->target_id;
     $file = \Drupal\file\Entity\File::load($logo_array);
@@ -225,6 +228,7 @@ function emailservice_cron() {
     \Drupal::state()->set('emailservice.execution', $request_time);
   }
 }
+
 /*
  * Implements hook_ENTITY_TYPE_insert().
  *
