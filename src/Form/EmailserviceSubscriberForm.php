@@ -48,7 +48,7 @@ class EmailserviceSubscriberForm extends FormBase {
 
     $form['first_name'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('First Name'),
+      '#title' => $this->t('Name'),
       '#default_value' => !empty($subscriber_info['first_name']) ? $subscriber_info['first_name'] : '',
       '#required' => TRUE,
       '#attributes' => [
@@ -60,7 +60,7 @@ class EmailserviceSubscriberForm extends FormBase {
 
     $form['last_name'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Last Name'),
+      '#title' => $this->t('Surname'),
       '#default_value' => !empty($subscriber_info['last_name']) ? $subscriber_info['last_name'] : '',
       '#required' => TRUE,
       '#attributes' => [

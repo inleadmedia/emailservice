@@ -119,7 +119,7 @@ class SubscriptionManagerController extends ControllerBase {
     $this->newsletter = $this->removeDuplicates($this->newsletter);
 
     $week = new DrupalDateTime();
-    $title = $this->t('New arriwals - Week @weekCount', ['@weekCount' => $week->format('W')]);
+    $title = $this->t('New arrivals - Week @weekCount', ['@weekCount' => $week->format('W')]);
 
     $this->newsletter = $this->prepareFeed($title, $this->newsletter);
 
