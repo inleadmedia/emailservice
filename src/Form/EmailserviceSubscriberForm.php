@@ -140,15 +140,8 @@ class EmailserviceSubscriberForm extends FormBase {
    * Form validator.
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $email_address = $form_state->getValue('email_address');
-
-    $connect = new PeytzmailConnect();
-
-    $request = $connect->findSubscriber($email_address);
-
-    if (empty($request['subscribers'])) {
-      $message = $this->t('%email_address is an invalid email address.', ['%email_address' => $email_address]);
-      $form_state->setErrorByName('email_address', $message);
+    if (!$form_state->getValue('email_address') || !filter_var($form_state->getValue('email_address'), FILTER_VALIDATE_EMAIL)) {
+      $form_state->setErrorByName('email_address', $this->t('Invalid email address.'));
     }
   }
 
@@ -173,9 +166,10 @@ class EmailserviceSubscriberForm extends FormBase {
         foreach ($form_datum as $i => $item) {
           $raw_categories[$i] = $item;
 
-          $first_level = explode('_', $item);
-          $second_level = explode('-', $first_level[1]);
           if (!empty($item)) {
+            $first_level = explode('_', $item);
+            $second_level = explode('-', $first_level[1]);
+
             $raw_types[$second_level[0]] = $second_level[0];
           }
         }
