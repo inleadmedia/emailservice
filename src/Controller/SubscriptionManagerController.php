@@ -255,12 +255,19 @@ class SubscriptionManagerController extends ControllerBase {
     $nids = NULL;
     $node = NULL;
     $valid_user = FALSE;
+    $email_parameter = '';
+    $cs_parameter = '';
 
     $municipality = \Drupal::request()->get('municipality');
     $params = \Drupal::request()->query->all();
     $params['municipality'] = $municipality;
-    $email_parameter = $params['email'];
-    $cs_parameter = $params['cs'];
+    if (!empty($params['email'])) {
+      $email_parameter = $params['email'];
+    }
+
+    if (!empty($params['cs'])) {
+      $cs_parameter = $params['cs'];
+    }
 
     $connect = new PeytzmailConnect();
 
@@ -284,9 +291,9 @@ class SubscriptionManagerController extends ControllerBase {
 
       $node = Node::load(reset($nids));
 
-      $params['is_allowed'] = FALSE;
+      $params['is_allowed'] = TRUE;
 
-      if (isset($email_parameter) && isset($cs_parameter)) {
+      if (!empty($email_parameter) && !empty($cs_parameter)) {
         $shared_secret_key = $node->get('field_shared_secret_key')->value;
 
         $prepare_string = $email_parameter . $shared_secret_key;
@@ -296,7 +303,14 @@ class SubscriptionManagerController extends ControllerBase {
         if ($cs_parameter == $control_cs) {
           $params['is_allowed'] = TRUE;
         }
+        else {
+          $params['is_allowed'] = FALSE;
+        }
       }
+      elseif (!empty($email_parameter) && empty($cs_parameter) || empty($email_parameter) && !empty($cs_parameter)) {
+        $params['is_allowed'] = FALSE;
+      }
+
       if (!empty($node)) {
         $mailing_list = $node->get('field_mailing_list_id')->value;
         $return['#subscriber_info'] = [
