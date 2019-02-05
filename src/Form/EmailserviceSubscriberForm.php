@@ -190,6 +190,12 @@ class EmailserviceSubscriberForm extends FormBase {
 
     $data['subscriber']['new_arrivals_categories'] = $this->prepareCategories($alias, $raw_categories, $subs_categories);
 
+    if (isset($subscriber_data['types'])) {
+      foreach ($subscriber_data['types'] as $existing_type) {
+        $raw_types[$existing_type] = $existing_type;
+      }
+    }
+
     foreach ($raw_types as $key => $raw_type) {
       if (!empty($raw_type)) {
         $data['subscriber']['new_arrivals_types'][] = $raw_type;
@@ -215,8 +221,15 @@ class EmailserviceSubscriberForm extends FormBase {
         ] + $data['subscriber'],
       ];
 
-      $connect->signupMailinglist($subscribe);
-      $message = $this->t('You were successfully subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
+      $signup = $connect->signupMailinglist($subscribe);
+
+      if (!empty($signup['exception_message'])) {
+        $message = $this->t("Your subscription wasn't accepted. Reason: @subscribe_exception_message", ['@subscribe_exception_message' => $signup['exception_message']]);
+        $type = $messenger::TYPE_ERROR;
+      }
+      else {
+        $message = $this->t('You were successfully subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
+      }
     }
     elseif ($op['#name'] == 'update') {
       $subscriber_data['subscriber']['subscriber']['email'] = $form_data['email_address'];

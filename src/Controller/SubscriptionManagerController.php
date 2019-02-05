@@ -6,12 +6,13 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
-use Drupal\user\Entity\User;
-use Symfony\Component\HttpFoundation\Response;
-use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\user\Entity\User;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class SubscriptionManagerController.
@@ -37,6 +38,7 @@ class SubscriptionManagerController extends ControllerBase {
     $registered_materials = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
       ->fields('epm', ['material_tid'])
       ->condition('status', 1)
+      ->condition('material_tid', 0, '!=')
       ->execute()
       ->fetchAll();
 
@@ -93,7 +95,9 @@ class SubscriptionManagerController extends ControllerBase {
             $result_item->creator = $object['author'];
           }
 
-          $result_item->date = $object['year'];
+          if (!empty($object['year'])) {
+            $result_item->date = $object['year'];
+          }
 
           if (!empty($object['cover'])) {
             $result_item->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object['cover'];
@@ -418,6 +422,48 @@ class SubscriptionManagerController extends ControllerBase {
     $response->addCommand(new ReplaceCommand('#emailservice_salt_field', $element['widget'][0]['value']));
 
     return $response;
+  }
+
+  /**
+   * Check if subscriber is already subscribed.
+   */
+  public static function checkSubscriber() {
+    $response = NULL;
+    $existing = FALSE;
+    $possible_email = \Drupal::request()->get('email');
+    $mailinglist = \Drupal::request()->get('mailinglist');
+
+    $connect = new PeytzmailConnect();
+    $request = $connect->findSubscriber($possible_email);
+
+    if ($request['total_records'] > 0) {
+      $found_subscribers = $request['subscribers'];
+
+      foreach ($found_subscribers as $subscriber_info) {
+        if ($possible_email == $subscriber_info['email'] && in_array($mailinglist, $subscriber_info['mailinglist_ids'])) {
+          $existing = TRUE;
+        }
+      }
+
+      if ($existing) {
+        $response = [
+          'status' => 'existing',
+          'message' => t("You have already subscribed to this mailinglist. You can manage your subscription through the email you have previously received."),
+        ];
+      }
+      else {
+        $response = [
+          'status' => 'not-existing',
+        ];
+      }
+    }
+    else {
+      $response = [
+        'status' => 'not-existing',
+      ];
+    }
+
+    return JsonResponse::create($response);
   }
 
 }
