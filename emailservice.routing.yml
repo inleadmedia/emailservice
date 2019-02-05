@@ -41,3 +41,11 @@ emailservice.generate_salt:
     _title: 'Generate salt'
   requirements:
     _permission: 'access content'
+
+emailservice.check_subscriber:
+  path: '/check-subscriber'
+  defaults:
+    _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::checkSubscriber'
+    _title: 'Generate salt'
+  requirements:
+    _permission: 'access content'

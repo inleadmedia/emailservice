@@ -97,6 +97,7 @@ class PeytzmailConnect {
    *   Response from service.
    */
   public function signupMailinglist(array $data) {
+    $return_data = [];
     $api_token = $this->config->get('peytzmail_api_token');
 
     $options = [
@@ -113,12 +114,20 @@ class PeytzmailConnect {
     }
     catch (ClientException $exception) {
       \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      $exception_message = JSON::decode($exception->getResponse()->getBody()->getContents());
+      $reason = explode(':', $exception_message['message']);
+
+      $return_data = [
+        'exception_message' => trim($reason[1]),
+      ];
     }
 
-    $return_data = [
-      'code' => $response->getStatusCode(),
-      'result' => $result,
-    ];
+    if (!empty($result)) {
+      $return_data = [
+        'code' => $response->getStatusCode(),
+        'result' => $result,
+      ];
+    }
 
     return $return_data;
   }
