@@ -38,6 +38,7 @@ class SubscriptionManagerController extends ControllerBase {
     $registered_materials = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
       ->fields('epm', ['material_tid'])
       ->condition('status', 1)
+      ->condition('entity_id', $nid)
       ->condition('material_tid', 0, '!=')
       ->execute()
       ->fetchAll();
@@ -48,10 +49,11 @@ class SubscriptionManagerController extends ControllerBase {
     }
 
     $categories = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
-      ->fields('epm', ['cql_query', 'label', 'machine_name'])
+      ->fields('epm', ['cql_query', 'label', 'machine_name', 'material_tid'])
       ->condition('epm.entity_id', $nid)
       ->condition('epm.preference_type', 'field_types_categories')
       ->condition('epm.status', 1)
+      ->condition('epm.material_tid', 0, '!=')
       ->execute()
       ->fetchAll();
 
@@ -61,55 +63,61 @@ class SubscriptionManagerController extends ControllerBase {
     $results = [];
     foreach ($materials as $material) {
       foreach ($categories as $category) {
-        $term = Term::load($material);
-        $type = $term->get('field_types_cql_query')->value;
-        $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
-        $uri = $url . $alias . $query;
+        if ($category->material_tid == $material) {
+          $term = Term::load($material);
+          $type = $term->get('field_types_cql_query')->value;
+          $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
+          $uri = $url . $alias . $query;
 
-        try {
-          $content = \Drupal::service('emailservice.opensearch')->request($uri)->get('content');
+          try {
+            $content = \Drupal::service('emailservice.opensearch')
+              ->request($uri)
+              ->get('content');
+          }
+          catch (\Exception $e) {
+            \Drupal::messenger()
+              ->addError($this->t("@message", ["@message" => $e->getMessage()]));
+            \Drupal::logger('emailservice')
+              ->error($this->t("@message", ["@message" => $e->getMessage()]));
+            $content = '';
+          }
+
+          $content = Json::decode($content);
+
+          $content = array_map(function ($object) use ($alias, $category, $item_url) {
+            $result_item = new \stdClass();
+
+            $result_item->identifier = $object['id'];
+
+            $result_item->title = $object['title'];
+            $result_item->type = $object['type'];
+            $result_item->url = $item_url . $object['id'];
+            $result_item->subject = $category->label;
+
+            if (!empty($object['description'])) {
+              $result_item->description = $object['description'];
+            }
+
+            if (!empty($object['author'])) {
+              $result_item->creator = $object['author'];
+            }
+
+            if (!empty($object['year'])) {
+              $result_item->date = $object['year'];
+            }
+
+            if (!empty($object['cover'])) {
+              $result_item->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object['cover'];
+            }
+
+            $result_item->type_key = $this->filterPreference($object['type']);
+            $result_item->subject_key = $category->machine_name;
+
+            return $result_item;
+          }, $content['objects']);
+
+          $results = array_merge($results, $content);
         }
-        catch (\Exception $e) {
-          \Drupal::messenger()->addError($this->t("@message", ["@message" => $e->getMessage()]));
-          \Drupal::logger('emailservice')->error($this->t("@message", ["@message" => $e->getMessage()]));
-          $content = '';
-        }
-
-        $content = Json::decode($content);
-
-        $content = array_map(function ($object) use ($alias, $category, $item_url) {
-          $result_item = new \stdClass();
-
-          $result_item->identifier = $object['id'];
-
-          $result_item->title = $object['title'];
-          $result_item->type = $object['type'];
-          $result_item->url = $item_url . $object['id'];
-          $result_item->subject = $category->label;
-
-          if (!empty($object['description'])) {
-            $result_item->description = $object['description'];
-          }
-
-          if (!empty($object['author'])) {
-            $result_item->creator = $object['author'];
-          }
-
-          if (!empty($object['year'])) {
-            $result_item->date = $object['year'];
-          }
-
-          if (!empty($object['cover'])) {
-            $result_item->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object['cover'];
-          }
-
-          $result_item->type_key = $this->filterPreference($object['type']);
-          $result_item->subject_key = $category->machine_name;
-
-          return $result_item;
-        }, $content['objects']);
-
-        $results = array_merge($results, $content);
       }
     }
 
