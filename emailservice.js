@@ -6,21 +6,27 @@
 var email_address = document.getElementsByName('email_address');
 var subscribe_button = document.getElementsByName('subscribe');
 var mailinglist_id = document.getElementsByName('mailinglist_id');
+var throbber = document.getElementsByClassName('loader');
 
 if (subscribe_button.length) {
-// Disabling subscription button by default.
+  // Disabling subscription button by default.
   subscribe_button[0].setAttribute('disabled', true);
 
-// Trigger form validation on blur event.
+  // Trigger form validation on blur event.
   email_address[0].addEventListener('blur', function (event) {
     // Define email variable.
     var email = event.target.value;
     var mailinglist = mailinglist_id[0].value;
 
-    console.log(mailinglist);
-
     // Check email string validity.
     if (isValidEmailAddress(email)) {
+
+      // Set the loader to indicate some progress.
+      var loader = document.createElement('img');
+      loader.src = "modules/custom/emailservice/assets/throbber_12.gif";
+      loader.setAttribute('style', 'width: 16px; height: 16px;')
+      throbber[0].appendChild(loader);
+
       // Prepare request.
       const HTTP = new XMLHttpRequest();
       const url = '/check-subscriber';
@@ -34,6 +40,9 @@ if (subscribe_button.length) {
         if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
           // Getting values from JSON response.
           var response = JSON.parse(this.response);
+
+          // Remove loader when request is finished.
+          loader.remove();
 
           // Process 'status' values.
           switch (response.status) {
@@ -51,15 +60,25 @@ if (subscribe_button.length) {
 
             case 'not-existing':
               email_address[0].classList.remove('is-invalid');
-              // email_address[0].classList.add('is-valid');
+              email_address[0].classList.add('is-valid');
 
               var success = document.createElement('div');
               success.classList.add('valid-feedback');
-              // success.innerText = response.message;
 
               email_address[0].parentNode.replaceChild(success, email_address[0].nextSibling);
 
               subscribe_button[0].removeAttribute('disabled');
+              break;
+
+            case 'not-valid':
+              subscribe_button[0].setAttribute('disabled', true);
+              email_address[0].classList.add('is-invalid');
+
+              var error = document.createElement('div');
+              error.classList.add('invalid-feedback');
+              error.innerText = response.message;
+
+              email_address[0].parentNode.replaceChild(error, email_address[0].nextSibling);
               break;
           }
         }
@@ -68,11 +87,7 @@ if (subscribe_button.length) {
     else {
       // Clear all additional theming.
       subscribe_button[0].setAttribute('disabled', true);
-
-      if (email_address[0].classList.contains('is-valid') || email_address[0].classList.contains('is-invalid')) {
-        email_address[0].classList.remove('is-invalid');
-        email_address[0].classList.remove('is-valid');
-      }
+      email_address[0].classList.add('is-invalid');
     }
   });
 }

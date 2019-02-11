@@ -8,6 +8,7 @@ use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\emailservice\PeytzmailConnect;
+use Drupal\emailservice\VerifyEmail;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\user\Entity\User;
@@ -438,26 +439,47 @@ class SubscriptionManagerController extends ControllerBase {
   public static function checkSubscriber() {
     $response = NULL;
     $existing = FALSE;
+    $config = \Drupal::config('system.site');
+    $site_mail = $config->get('mail');
     $possible_email = \Drupal::request()->get('email');
     $mailinglist = \Drupal::request()->get('mailinglist');
 
-    $connect = new PeytzmailConnect();
-    $request = $connect->findSubscriber($possible_email);
+    $valid = FALSE;
 
-    if ($request['total_records'] > 0) {
-      $found_subscribers = $request['subscribers'];
+    try {
+      $check = new VerifyEmail();
+      $check->setStreamTimeoutWait(20);
+      $check->setEmailFrom($site_mail);
+      $valid = $check->check($possible_email);
+    }
+    catch (\VerifyEmailException $e) {
+      print $e->getMessage();
+    }
 
-      foreach ($found_subscribers as $subscriber_info) {
-        if ($possible_email == $subscriber_info['email'] && in_array($mailinglist, $subscriber_info['mailinglist_ids'])) {
-          $existing = TRUE;
+    if ($valid) {
+      $connect = new PeytzmailConnect();
+      $request = $connect->findSubscriber($possible_email);
+
+      if ($request['total_records'] > 0) {
+        $found_subscribers = $request['subscribers'];
+
+        foreach ($found_subscribers as $subscriber_info) {
+          if ($possible_email == $subscriber_info['email'] && in_array($mailinglist, $subscriber_info['mailinglist_ids'])) {
+            $existing = TRUE;
+          }
         }
-      }
 
-      if ($existing) {
-        $response = [
-          'status' => 'existing',
-          'message' => t("You have already subscribed to this mailinglist. You can manage your subscription through the email you have previously received."),
-        ];
+        if ($existing) {
+          $response = [
+            'status' => 'existing',
+            'message' => t("You have already subscribed to this mailinglist. You can manage your subscription through the email you have previously received."),
+          ];
+        }
+        else {
+          $response = [
+            'status' => 'not-existing',
+          ];
+        }
       }
       else {
         $response = [
@@ -467,7 +489,8 @@ class SubscriptionManagerController extends ControllerBase {
     }
     else {
       $response = [
-        'status' => 'not-existing',
+        'status' => 'not-valid',
+        'message' => t('Email address is not existing or is not valid.'),
       ];
     }
 
