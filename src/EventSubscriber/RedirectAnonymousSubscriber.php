@@ -37,7 +37,7 @@ class RedirectAnonymousSubscriber implements EventSubscriberInterface {
       // Add logic to check other routes you want available to anonymous users,
       // otherwise, redirect to login page.
       $route_name = \Drupal::routeMatch()->getRouteName();
-      if ($route_name == 'emailservice.subscription_manager') {
+      if ($route_name == 'emailservice.subscription_manager' || $route_name == 'emailservice.check_subscriber') {
         return;
       }
 
