@@ -184,7 +184,9 @@ class EmailserviceSubscriberForm extends FormBase {
       // If is not set categories array, make request to fetch from service.
       $subscriber_data_remote = $connect->findSubscriber($form_data['email_address']);
       foreach ($subscriber_data_remote['subscribers'] as $subscriber) {
-        $subs_categories = $subscriber["extra_fields"]["new_arrivals_categories"];
+        if (!empty($subscriber['extra_fields'])) {
+          $subs_categories = $subscriber["extra_fields"]["new_arrivals_categories"];
+        }
       }
     }
 
