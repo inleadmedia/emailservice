@@ -140,8 +140,25 @@ class EmailserviceSubscriberForm extends FormBase {
    * Form validator.
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    // Drupal validation of email address.
     if (!$form_state->getValue('email_address') || !filter_var($form_state->getValue('email_address'), FILTER_VALIDATE_EMAIL)) {
       $form_state->setErrorByName('email_address', $this->t('Invalid email address.'));
+    }
+
+    // Validate preferences.
+    $values = $form_state->getValues();
+    $categories = [];
+    foreach ($values as $key => $value) {
+      if (strpos($key, 'category') !== FALSE) {
+        foreach ($value as $cat => $item) {
+          $categories[$cat] = $item;
+        }
+      }
+    }
+    $check_empty = array_filter($categories);
+
+    if (empty($check_empty)) {
+      $form_state->setError($form['preferences_wrapper'], $this->t('You have to pick at least one interest in order to subscribe.'));
     }
   }
 
