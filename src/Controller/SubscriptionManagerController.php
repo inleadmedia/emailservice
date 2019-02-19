@@ -133,8 +133,9 @@ class SubscriptionManagerController extends ControllerBase {
 
     $week = new DrupalDateTime();
     $title = $this->t('New arrivals - Week @weekCount', ['@weekCount' => $week->format('W')]);
+    $preheader = 'Her er en oversigt over materialer, der er bestilt / indgået på bibliotekerne de seneste/sidste 7 dage.';
 
-    $this->newsletter = $this->prepareFeed($title, $this->newsletter);
+    $this->newsletter = $this->prepareFeed($title, $preheader, $this->newsletter);
 
   }
 
@@ -171,13 +172,15 @@ class SubscriptionManagerController extends ControllerBase {
    *
    * @param string $title
    *   Newsletter title.
+   * @param string $preheader
+   *   Newsletter preheader.
    * @param array $data
    *   Newsletter data.
    *
    * @return \stdClass
    *   Feed object.
    */
-  private function prepareFeed(string $title, array $data = NULL) {
+  private function prepareFeed(string $title, string $preheader, array $data = NULL) {
     $object = new \stdClass();
     $object->name = 'pushed_arrivals';
     $object->data = $data;
@@ -187,6 +190,8 @@ class SubscriptionManagerController extends ControllerBase {
     $feed->newsletter = new \stdClass();
 
     $feed->newsletter->title = $title;
+    $feed->newsletter->subject = $title;
+    $feed->newsletter->preheader = $preheader;
     $feed->newsletter->feeds = $feeds;
 
     return $feed;
