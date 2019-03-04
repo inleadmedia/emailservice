@@ -81,6 +81,9 @@ class EmailserviceSubscriberForm extends FormBase {
 
       foreach ($grouped_categories as $tid => $grouped_category) {
         $term = Term::load($tid);
+        if (empty($term)) {
+          break;
+        }
         $type_name = $term->getName();
 
         $category_options = [];

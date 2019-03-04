@@ -66,6 +66,10 @@ class SubscriptionManagerController extends ControllerBase {
       foreach ($categories as $category) {
         if ($category->material_tid == $material) {
           $term = Term::load($material);
+          if (empty($term)) {
+            \Drupal::logger('emailservice')->error($this->t('Nonexistent term with tid "@tid" was pushed for processing.', ['@tid' => $material]));
+            break;
+          }
           $type = $term->get('field_types_cql_query')->value;
           $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
           $uri = $url . $alias . $query;
@@ -192,6 +196,7 @@ class SubscriptionManagerController extends ControllerBase {
     $feed->newsletter->title = $title;
     $feed->newsletter->subject = $title;
     $feed->newsletter->preheader = $preheader;
+    $feed->newsletter->auto_subject = FALSE;
     $feed->newsletter->feeds = $feeds;
 
     return $feed;
