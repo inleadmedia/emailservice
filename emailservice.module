@@ -163,7 +163,12 @@ function emailservice_node_access(\Drupal\node\NodeInterface $node, $op, \Drupal
   switch ($op) {
     case 'view':
     case 'update':
-      return AccessResult::allowedIf($node->getOwnerId() == $account->id());
+      if ($account->isAnonymous()) {
+        return new AccessResultForbidden();
+      }
+      else {
+        return AccessResult::allowedIf($node->getOwnerId() == $account->id());
+      }
       break;
 
     case 'create':
