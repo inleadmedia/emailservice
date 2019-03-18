@@ -47,6 +47,12 @@ function emailservice_schema() {
         'not null' => TRUE,
         'default' => '',
       ],
+      'material_tid' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
       'status' => [
         'type' => 'int',
         'not null' => TRUE,
@@ -60,7 +66,7 @@ function emailservice_schema() {
       'machine_name' => ['machine_name'],
     ],
     'primary_key' => [
-      'id'
+      'id',
     ],
   ];
 
@@ -72,8 +78,10 @@ function emailservice_schema() {
  */
 function emailservice_update_8001() {
   $alias_storage = new AliasStorage(\Drupal::database(), \Drupal::moduleHandler());
-  $nids = \Drupal::entityQuery('node')->condition('type','subscription')->execute();
-  $nodes =  Node::loadMultiple($nids);
+  $nids = \Drupal::entityQuery('node')
+    ->condition('type', 'subscription')
+    ->execute();
+  $nodes = Node::loadMultiple($nids);
   foreach ($nodes as $node) {
     $author_alias = $node->getOwner()->field_alias->value;
     try {
@@ -82,4 +90,33 @@ function emailservice_update_8001() {
       echo $e;
     }
   }
+}
+
+/**
+ * Add new column into database.
+ *
+ * @return \Drupal\Core\Database\Schema
+ */
+function emailservice_update_8002() {
+  // Prepare field definition.
+  $field = [
+    'type' => 'int',
+    'not null' => TRUE,
+    'unsigned' => TRUE,
+    'default' => 0,
+  ];
+
+  $schema = \Drupal::database()->schema();
+
+  // Add field to custom table.
+  $schema->addField('emailservice_preferences_mapping', 'material_tid', $field);
+
+  // Prepare update of field table.
+  $table = 'field_types_categories';
+  $column = 'material_tid';
+
+  // Update the field data table.
+  $schema->addField('node__' . $table, $table . '_' . $column, $field);
+  // The field revision table.
+  $schema->addField('node_revision__' . $table, $table . '_' . $column, $field);
 }

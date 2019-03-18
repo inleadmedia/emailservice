@@ -45,8 +45,14 @@ function emailservice_theme($existing, $type, $theme, $path) {
  * Implements hook_preprocess_HOOK().
  */
 function emailservice_preprocess_subscription_manager(&$variables) {
+  global $base_url;
   if (!empty($variables['node'])) {
     $node = $variables['node'];
+
+    $variables['emailservice_path'] = $base_url . '/' . drupal_get_path('module', 'emailservice');
+
+    $title = $node->getTitle();
+    $variables['title'] = $title;
 
     // Process logo output.
     $logo_array = $node->get('field_logo')->target_id;
@@ -157,7 +163,12 @@ function emailservice_node_access(\Drupal\node\NodeInterface $node, $op, \Drupal
   switch ($op) {
     case 'view':
     case 'update':
-      return AccessResult::allowedIf($node->getOwnerId() == $account->id());
+      if ($account->isAnonymous()) {
+        return new AccessResultForbidden();
+      }
+      else {
+        return AccessResult::allowedIf($node->getOwnerId() == $account->id());
+      }
       break;
 
     case 'create':
@@ -225,6 +236,7 @@ function emailservice_cron() {
     \Drupal::state()->set('emailservice.execution', $request_time);
   }
 }
+
 /*
  * Implements hook_ENTITY_TYPE_insert().
  *
@@ -258,5 +270,23 @@ function emailservice_node_delete(Drupal\Core\Entity\EntityInterface $entity) {
     $alias_storage = new AliasStorage(Drupal::database(), \Drupal::moduleHandler());
     $author_alias = $entity->getOwner()->field_alias->value;
     $alias_storage->delete(['alias' => '/' . $author_alias]);
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function emailservice_preprocess_input(&$variables) {
+  if (isset($variables['attributes']['class'])) {
+    if (is_object($variables['attributes']['class'])) {
+      if ( in_array( 'error', $variables['attributes']['class']->value() ) ) {
+        $variables['attributes']['class']->addClass('is-invalid');
+      }
+    }
+    elseif (is_array($variables['attributes']['class'])) {
+      if ( in_array( 'error', $variables['attributes']['class'] ) ) {
+        $variables['attributes']['class'][] = 'is-invalid';
+      }
+    }
   }
 }

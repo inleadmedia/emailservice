@@ -6,6 +6,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
+use Drupal\taxonomy\Entity\Term;
 
 /**
  * Class EmailserviceSubscriberForm.
@@ -37,6 +38,7 @@ class EmailserviceSubscriberForm extends FormBase {
       '#title' => $this->t('Email address'),
       '#default_value' => !empty($subscriber_info['email']) ? $subscriber_info['email'] : '',
       '#required' => TRUE,
+      '#maxlength' => 254,
       '#attributes' => [
         'placeholder' => $this->t('Type in the email address you wish to use.'),
         'class' => ['form-control'],
@@ -44,42 +46,61 @@ class EmailserviceSubscriberForm extends FormBase {
       ],
     ];
 
+    $form['first_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Name'),
+      '#default_value' => !empty($subscriber_info['first_name']) ? $subscriber_info['first_name'] : '',
+      '#required' => TRUE,
+      '#attributes' => [
+        'placeholder' => $this->t('Type in the first name.'),
+        'class' => ['form-control'],
+        'autocomplete' => "off",
+      ],
+    ];
+
+    $form['last_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Surname'),
+      '#default_value' => !empty($subscriber_info['last_name']) ? $subscriber_info['last_name'] : '',
+      '#required' => TRUE,
+      '#attributes' => [
+        'placeholder' => $this->t('Type in the last name.'),
+        'class' => ['form-control'],
+        'autocomplete' => "off",
+      ],
+    ];
     $form['preferences_wrapper'] = [
       '#type' => 'container',
     ];
 
     if (!empty($node)) {
-      $types_vocabulary = 'types_materials';
-      $taxonomy_types = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($types_vocabulary);
-
-      $types_data = $this->prepareOptionsList($taxonomy_types);
-
-      $form['preferences_wrapper']['types'] = [
-        '#type' => 'checkboxes',
-        '#id' => 'preference_types',
-        '#title' => $this->t('Types of materials'),
-        '#description' => $this->t('Choose the material types you are interested in:'),
-        '#description_display' => 'before',
-        '#options' => $types_data,
-        '#default_value' => !empty($subscriber_info['types']) ? $subscriber_info['types'] : [],
-      ];
-
       $node_field_categories = $node->get('field_types_categories')->getValue();
-      $category_options = [];
 
-      foreach ($node_field_categories as $node_field_category) {
-        $category_options[$node_field_category['machine_name']] = $node_field_category['label'];
+      // Extract material types groups.
+      $grouped_categories = $this->groupCategories($node_field_categories);
+
+      foreach ($grouped_categories as $tid => $grouped_category) {
+        $term = Term::load($tid);
+        if (empty($term)) {
+          break;
+        }
+        $type_name = $term->getName();
+
+        $category_options = [];
+        foreach ($grouped_category as $item) {
+          $category_options[$item['machine_name']] = $item['label'];
+        }
+
+        $form['preferences_wrapper']['categories']['category_' . $tid] = [
+          '#prefix' => '<div class="col-sm-4">',
+          '#suffix' => '</div>',
+          '#type' => 'checkboxes',
+          '#id' => 'preference_categories',
+          '#title' => "<h5>" . $type_name . "</h5>",
+          '#options' => $category_options,
+          '#default_value' => !empty($subscriber_info['categories']) ? $subscriber_info['categories'] : [],
+        ];
       }
-
-      $form['preferences_wrapper']['categories'] = [
-        '#type' => 'checkboxes',
-        '#id' => 'preference_categories',
-        '#title' => $this->t('Genre/Categories'),
-        '#description' => $this->t('Choose the categories you are interested in:'),
-        '#description_display' => 'before',
-        '#options' => $category_options,
-        '#default_value' => !empty($subscriber_info['categories']) ? $subscriber_info['categories'] : [],
-      ];
     }
 
     $form['preferences_wrapper']['actions'] = [
@@ -119,20 +140,61 @@ class EmailserviceSubscriberForm extends FormBase {
   }
 
   /**
+   * Form validator.
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    // Drupal validation of email address.
+    if (!$form_state->getValue('email_address') || !filter_var($form_state->getValue('email_address'), FILTER_VALIDATE_EMAIL)) {
+      $form_state->setErrorByName('email_address', $this->t('Invalid email address.'));
+    }
+
+    // Validate preferences.
+    $values = $form_state->getValues();
+    $categories = [];
+    foreach ($values as $key => $value) {
+      if (strpos($key, 'category') !== FALSE) {
+        foreach ($value as $cat => $item) {
+          $categories[$cat] = $item;
+        }
+      }
+    }
+    $check_empty = array_filter($categories);
+
+    if (empty($check_empty)) {
+      $form_state->setError($form['preferences_wrapper'], $this->t('You have to pick at least one interest in order to subscribe.'));
+    }
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $op = $form_state->getTriggeringElement();
     $data = [];
     $message = '';
+    $raw_types = [];
+    $raw_categories = [];
 
     $connect = new PeytzmailConnect();
     $subscriber_data = $form_state->get('subscriber_info');
     $alias = $form_state->get('alias');
 
     $form_data = $form_state->getValues();
-    $raw_categories = $form_data['categories'];
-    $raw_types = $form_data['types'];
+
+    foreach ($form_data as $key => $form_datum) {
+      if (strpos($key, 'category') !== FALSE) {
+        foreach ($form_datum as $i => $item) {
+          $raw_categories[$i] = $item;
+
+          if (!empty($item)) {
+            $first_level = explode('_', $item);
+            $second_level = explode('-', $first_level[1]);
+
+            $raw_types[$second_level[0]] = $second_level[0];
+          }
+        }
+      }
+    }
 
     $subs_categories = [];
     if (isset($subscriber_data['categories'])) {
@@ -142,11 +204,19 @@ class EmailserviceSubscriberForm extends FormBase {
       // If is not set categories array, make request to fetch from service.
       $subscriber_data_remote = $connect->findSubscriber($form_data['email_address']);
       foreach ($subscriber_data_remote['subscribers'] as $subscriber) {
-        $subs_categories = $subscriber["extra_fields"]["new_arrivals_categories"];
+        if (!empty($subscriber['extra_fields'])) {
+          $subs_categories = $subscriber["extra_fields"]["new_arrivals_categories"];
+        }
       }
     }
 
     $data['subscriber']['new_arrivals_categories'] = $this->prepareCategories($alias, $raw_categories, $subs_categories);
+
+    if (isset($subscriber_data['types'])) {
+      foreach ($subscriber_data['types'] as $existing_type) {
+        $raw_types[$existing_type] = $existing_type;
+      }
+    }
 
     foreach ($raw_types as $key => $raw_type) {
       if (!empty($raw_type)) {
@@ -168,13 +238,25 @@ class EmailserviceSubscriberForm extends FormBase {
         'mailinglist_ids' => [$form_data['mailinglist_id']],
         'subscriber' => [
           'email' => $form_data['email_address'],
+          'first_name' => $form_data['first_name'],
+          'last_name' => $form_data['last_name'],
         ] + $data['subscriber'],
       ];
 
-      $connect->signupMailinglist($subscribe);
-      $message = $this->t('You were successfully subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
+      $signup = $connect->signupMailinglist($subscribe);
+
+      if (!empty($signup['exception_message'])) {
+        $message = $this->t("Your subscription wasn't accepted. Reason: @subscribe_exception_message", ['@subscribe_exception_message' => $signup['exception_message']]);
+        $type = $messenger::TYPE_ERROR;
+      }
+      else {
+        $message = $this->t('You were successfully subscribed to @mailinglist list!', ['@mailinglist' => $form_data['mailinglist_id']]);
+      }
     }
     elseif ($op['#name'] == 'update') {
+      $subscriber_data['subscriber']['subscriber']['email'] = $form_data['email_address'];
+      $subscriber_data['subscriber']['subscriber']['first_name'] = $form_data['first_name'];
+      $subscriber_data['subscriber']['subscriber']['last_name'] = $form_data['last_name'];
       $result = $connect->updateSubscriber($subscriber_data);
       if (!empty($result['exception_code'])) {
         $message = $this->t("Something went wrong. Your subscription wasn't updated.");
@@ -255,22 +337,29 @@ class EmailserviceSubscriberForm extends FormBase {
   }
 
   /**
-   * Generate options list.
+   * Group categories by type.
    *
-   * @param array $terms
-   *   Array of terms.
+   * @param array $items
+   *   Array of categories.
    *
    * @return array
-   *   Options list.
+   *   Grouped array.
    */
-  public function prepareOptionsList(array $terms) {
-    $result = [];
-    foreach ($terms as $term) {
-      $term_name = mb_strtolower($term->name, 'UTF-8');
-      $term_name = preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
-      $result[$term_name] = $term->name;
+  public function groupCategories(array $items) {
+    $templevel = 0;
+    $newkey = 0;
+    $grouparr = [];
+
+    foreach ($items as $key => $val) {
+      if ($templevel == $val['material_tid']) {
+        $grouparr[$templevel][$newkey] = $val;
+      }
+      else {
+        $grouparr[$val['material_tid']][$newkey] = $val;
+      }
+      $newkey++;
     }
-    return $result;
+    return $grouparr;
   }
 
 }

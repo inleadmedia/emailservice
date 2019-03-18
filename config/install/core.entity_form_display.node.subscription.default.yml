@@ -7,8 +7,8 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
+    - field.field.node.subscription.field_shared_secret_key
     - field.field.node.subscription.field_types_categories
-    - field.field.node.subscription.field_types_materials
     - field.field.node.subscription.field_url_for_item_page
     - image.style.thumbnail
     - node.type.subscription
@@ -22,13 +22,13 @@ bundle: subscription
 mode: default
 content:
   field_buttons_color:
-    weight: 4
+    weight: 5
     settings: {  }
     third_party_settings: {  }
     type: color_field_widget_html5
     region: content
   field_headline_color:
-    weight: 3
+    weight: 4
     settings: {  }
     third_party_settings: {  }
     type: color_field_widget_html5
@@ -42,7 +42,7 @@ content:
     type: string_textarea
     region: content
   field_logo:
-    weight: 2
+    weight: 3
     settings:
       progress_indicator: throbber
       preview_image_style: thumbnail
@@ -50,21 +50,21 @@ content:
     type: image_image
     region: content
   field_mailing_list_id:
-    weight: 5
+    weight: 6
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
     type: string_textfield
     region: content
-  field_types_categories:
-    weight: 9
+  field_shared_secret_key:
+    weight: 8
     settings: {  }
     third_party_settings: {  }
-    type: preferences_set_widget
+    type: salt_widget_type
     region: content
-  field_types_materials:
-    weight: 8
+  field_types_categories:
+    weight: 9
     settings: {  }
     third_party_settings: {  }
     type: preferences_set_widget

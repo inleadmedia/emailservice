@@ -7,7 +7,6 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\emailservice\Controller\SubscriptionManagerController;
-use Drupal\user\Entity\User;
 
 /**
  * Plugin implementation of the 'preferences_set_field_type' field type.
@@ -37,6 +36,10 @@ class PreferencesSetFieldType extends FieldItemBase {
 
     $properties['cql_query'] = DataDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Preference CQL Query'))
+      ->setRequired(TRUE);
+
+    $properties['material_tid'] = DataDefinition::create('integer')
+      ->setLabel(new TranslatableMarkup('Preference material type'))
       ->setRequired(TRUE);
 
     $properties['status'] = DataDefinition::create('integer')
@@ -79,6 +82,12 @@ class PreferencesSetFieldType extends FieldItemBase {
           'not null' => TRUE,
           'default' => 1,
         ],
+        'material_tid' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'unsigned' => TRUE,
+          'default' => 0,
+        ],
       ],
     ];
 
@@ -93,6 +102,7 @@ class PreferencesSetFieldType extends FieldItemBase {
       'label',
       'machine_name',
       'cql_query',
+      'material_tid',
       'status',
     ];
 
@@ -107,7 +117,7 @@ class PreferencesSetFieldType extends FieldItemBase {
    */
   public function preSave() {
     $machine_name = new SubscriptionManagerController();
-    $machine_name = $machine_name->generateMachineName($this->getEntity(), $this->getValue()['label']);
+    $machine_name = $machine_name->generateMachineName($this->getEntity(), $this->getValue()['label'], $this->getValue()['material_tid']);
     $this->set('machine_name', $machine_name);
   }
 
@@ -133,6 +143,7 @@ class PreferencesSetFieldType extends FieldItemBase {
     $connection = \Drupal::database();
     $connection->merge('emailservice_preferences_mapping')
       ->key('machine_name', $db_pref['machine_name'])
+      ->key('material_tid', $db_pref['material_tid'])
       ->fields($db_pref)
       ->execute();
   }
