@@ -1,6 +1,7 @@
 <?php
 
 use Drupal\Core\Path\AliasStorage;
+use Drupal\field\Entity\FieldStorageConfig as FieldStorageConfigAlias;
 use Drupal\node\Entity\Node;
 
 /**
@@ -119,4 +120,37 @@ function emailservice_update_8002() {
   $schema->addField('node__' . $table, $table . '_' . $column, $field);
   // The field revision table.
   $schema->addField('node_revision__' . $table, $table . '_' . $column, $field);
+}
+
+/**
+ * Alter "Intro" field settings.
+ */
+function emailservice_update_8003() {
+  // Add content format column into database.
+  $column = [
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => FALSE,
+    'default' => 'full_html',
+  ];
+
+  $schema = \Drupal::database()->schema();
+  $schema->addField('node__field_intro_text', 'field_intro_text_format', $column);
+  $schema->addField('node_revision__field_intro_text', 'field_intro_text_format', $column);
+
+  // Alter field storage settings.
+  $config = \Drupal::configFactory()
+    ->getEditable('field.storage.node.field_intro_text');
+  $config->set('dependencies.module', ['node', 'text']);
+  $config->set('type', 'text_long');
+  $config->set('settings', []);
+  $config->set('module', 'text');
+  $config->save(TRUE);
+
+  // Alter field settings.
+  $config2 = \Drupal::configFactory()->getEditable('field.field.node.subscription.field_intro_text');
+  $config2->set('field_type', 'text_long');
+  $config2->save(TRUE);
+
+  FieldStorageConfigAlias::loadByName('node', 'field_intro_text')->save();
 }
