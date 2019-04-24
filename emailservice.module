@@ -236,7 +236,9 @@ function emailservice_cron() {
 
   $nids = \Drupal::entityQuery('node')
     ->condition('type', 'subscription')
+    ->condition('status', 1)
     ->execute();
+
   // Send request to peytz mail.
   foreach ($nids as $nid) {
     $manager = new SubscriptionManagerController();
