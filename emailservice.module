@@ -111,6 +111,23 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
       }
     }
   }
+
+  if ($form_id == 'node_subscription_edit_form' || $form_id == "node_subscription_form") {
+    $alias = 'easylibrary';
+
+    $build_info = $form_state->getBuildInfo();
+    $object_callbacks = $build_info['callback_object'];
+    /** @var \Drupal\node\Entity\Node $entity */
+    $entity = $object_callbacks->getEntity();
+
+    if (!$entity->isNew()) {
+      $alias = $entity->getOwner()->get('field_alias')->value;
+    }
+
+    $form_state->setFormState([
+      'municipality_alias' => $alias,
+    ]);
+  }
 }
 
 function emailservice_type_terms_send(&$form, FormStateInterface $formState) {

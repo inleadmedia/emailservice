@@ -5,6 +5,8 @@ namespace Drupal\emailservice\Plugin\Field\FieldWidget;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\taxonomy\Entity\Term;
+use GuzzleHttp\Client;
 
 /**
  * Plugin implementation of the 'preferences_set_widget' widget.
@@ -45,7 +47,6 @@ class PreferencesSetWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-
     $item =& $items[$delta];
 
     $element = [
@@ -69,6 +70,9 @@ class PreferencesSetWidget extends WidgetBase {
       '#type' => 'textfield',
       '#title' => t('CQL Query'),
       '#default_value' => isset($item->cql_query) ? $item->cql_query : NULL,
+      '#element_validate' => [
+        [static::class, 'validate'],
+      ],
     ];
 
     $element['status'] = [
@@ -94,4 +98,30 @@ class PreferencesSetWidget extends WidgetBase {
     return $element;
   }
 
+  /**
+   * @inheritDoc
+   */
+  public static function validate($element, FormStateInterface $form_state) {
+    $cql_query = $element['#value'];
+    $alias = $form_state->get('municipality_alias');
+
+    if (!empty($cql_query)) {
+      $url = \Drupal::config('lms.config')->get('lms_api_url');
+
+      $delta = $element['#parents'][1];
+      $categories_field= $form_state->getValue('field_types_categories');
+      $material_tid = $categories_field[$delta]['material_tid'];
+      $type = Term::load($material_tid)->get('field_types_cql_query')->value;
+
+      $query = "/search?query=(($type) AND ($cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
+      $uri = $url . $alias . $query;
+      try {
+        $request = new Client();
+        $request->get($uri);
+      }
+      catch (\Exception $e) {
+        $form_state->setError($element, t('There are errors in search string. Please correct this.'));
+      }
+    }
+  }
 }
