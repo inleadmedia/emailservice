@@ -212,6 +212,7 @@ class SubscriptionManagerController extends ControllerBase {
    *   Renderable array.
    */
   public function sendNewsletter($nid) {
+    $content = $this->t('Request to LMS did not returned any results. The feed will not be pushed.');
     $node = Node::load($nid);
 
     try {
@@ -220,21 +221,24 @@ class SubscriptionManagerController extends ControllerBase {
 
       $this->lmsRequest($nid, $alias);
 
-      $this->prepareNewsletter();
+      if (!empty($this->newsletter)) {
+        $this->prepareNewsletter();
 
-      $mailinglist = $node->get('field_mailing_list_id')->getString();
+        $mailinglist = $node->get('field_mailing_list_id')->getString();
 
-      $connect = new PeytzmailConnect();
-      $return = $connect->createAndSend($mailinglist, $this->newsletter);
+        $connect = new PeytzmailConnect();
+        $return = $connect->createAndSend($mailinglist, $this->newsletter);
 
-      $content = Json::encode($return);
+        $content = Json::encode($return);
+      }
+      else {
+        \Drupal::logger('emailservice')->info($content);
+      }
     }
     catch (\Exception $exception) {
       \Drupal::logger('emailservice')
         ->error($exception->getMessage());
       \Drupal::messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
-
-      $content = [];
     }
 
     $renderer = [
