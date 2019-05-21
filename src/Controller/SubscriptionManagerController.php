@@ -8,10 +8,10 @@ use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\emailservice\PeytzmailConnect;
-use Drupal\emailservice\VerifyEmail;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\user\Entity\User;
+use Egulias\EmailValidator\EmailValidator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -453,20 +453,16 @@ class SubscriptionManagerController extends ControllerBase {
   public static function checkSubscriber() {
     $response = NULL;
     $existing = FALSE;
-    $config = \Drupal::config('system.site');
-    $site_mail = $config->get('mail');
     $possible_email = \Drupal::request()->get('email');
     $mailinglist = \Drupal::request()->get('mailinglist');
 
     $valid = FALSE;
 
     try {
-      $check = new VerifyEmail();
-      $check->setStreamTimeoutWait(20);
-      $check->setEmailFrom($site_mail);
-      $valid = $check->check($possible_email);
+      $validator = new EmailValidator();
+      $valid = $validator->isValid($possible_email, TRUE, TRUE);
     }
-    catch (\VerifyEmailException $e) {
+    catch (\Exception $e) {
       print $e->getMessage();
     }
 
