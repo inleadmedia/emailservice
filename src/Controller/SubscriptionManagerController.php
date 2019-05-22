@@ -12,6 +12,7 @@ use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\user\Entity\User;
 use Egulias\EmailValidator\EmailValidator;
+use Egulias\EmailValidator\Validation\RFCValidation;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -461,7 +462,7 @@ class SubscriptionManagerController extends ControllerBase {
 
     try {
       $validator = new EmailValidator();
-      $valid = $validator->isValid($possible_email, TRUE, TRUE);
+      $valid = $validator->isValid($possible_email, new RFCValidation());
     }
     catch (\Exception $e) {
       print $e->getMessage();
