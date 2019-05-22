@@ -39,6 +39,13 @@ class LMSClientConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $form['lms']['lms_covers_api_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Covers Service URL'),
+      '#default_value' => $config->get('lms_covers_api_url'),
+      '#required' => TRUE,
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -50,6 +57,7 @@ class LMSClientConfigForm extends ConfigFormBase {
 
     $this->config('lms.config')
       ->set('lms_api_url', $form_state->getValue('lms_api_url'))
+      ->set('lms_covers_api_url', $form_state->getValue('lms_covers_api_url'))
       ->save();
   }
 

@@ -35,6 +35,7 @@ class SubscriptionManagerController extends ControllerBase {
    */
   private function lmsRequest(string $nid, string $alias) {
     $url = \Drupal::config('lms.config')->get('lms_api_url');
+    $covers_url = \Drupal::config('lms.config')->get('lms_covers_api_url');
 
     $registered_materials = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
       ->fields('epm', ['material_tid'])
@@ -89,7 +90,7 @@ class SubscriptionManagerController extends ControllerBase {
 
           $content = Json::decode($content);
 
-          $content = array_map(function ($object) use ($alias, $category, $item_url) {
+          $content = array_map(function ($object) use ($alias, $category, $item_url, $covers_url) {
             $result_item = new \stdClass();
 
             $result_item->identifier = $object['id'];
@@ -112,7 +113,7 @@ class SubscriptionManagerController extends ControllerBase {
             }
 
             if (!empty($object['cover'])) {
-              $result_item->image = 'https://v2.cover.lms.inlead.ws/' . $alias . $object['cover'];
+              $result_item->image = $covers_url . $alias . $object['cover'] . '?size=210&crop=210x315';
             }
 
             $result_item->type_key = $this->filterPreference($object['type']);
