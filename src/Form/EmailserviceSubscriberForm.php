@@ -92,11 +92,9 @@ class EmailserviceSubscriberForm extends FormBase {
         }
 
         $form['preferences_wrapper']['categories']['category_' . $tid] = [
-          '#prefix' => '<div class="col-sm-4">',
-          '#suffix' => '</div>',
           '#type' => 'checkboxes',
           '#id' => 'preference_categories',
-          '#title' => "<h5>" . $type_name . "</h5>",
+          '#title' => $type_name,
           '#options' => $category_options,
           '#default_value' => !empty($subscriber_info['categories']) ? $subscriber_info['categories'] : [],
         ];
