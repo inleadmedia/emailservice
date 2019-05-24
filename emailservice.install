@@ -43,10 +43,9 @@ function emailservice_schema() {
         'default' => '',
       ],
       'cql_query' => [
-        'type' => 'varchar',
-        'length' => 255,
+        'type' => 'text',
+        'size' => 'big',
         'not null' => TRUE,
-        'default' => '',
       ],
       'material_tid' => [
         'type' => 'int',
@@ -153,4 +152,23 @@ function emailservice_update_8003() {
   $config2->save(TRUE);
 
   FieldStorageConfigAlias::loadByName('node', 'field_intro_text')->save();
+}
+
+/**
+ * Change field type for "CQL query" field.
+ */
+function emailservice_update_8006() {
+  $field_spec = [
+    'type' => 'text',
+    'size' => 'big',
+    'not null' => TRUE,
+  ];
+  $schema = \Drupal::database()->schema();
+  $schema->changeField('emailservice_preferences_mapping', 'cql_query', 'cql_query', $field_spec);
+
+  $field_tables = ['node__field_types_categories', 'node_revision__field_types_categories'];
+
+  foreach ($field_tables as $field_table) {
+    $schema->changeField($field_table, 'field_types_categories_cql_query', 'field_types_categories_cql_query', $field_spec);
+  }
 }

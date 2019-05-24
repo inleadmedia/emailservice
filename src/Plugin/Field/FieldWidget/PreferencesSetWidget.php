@@ -67,7 +67,7 @@ class PreferencesSetWidget extends WidgetBase {
     ];
 
     $element['cql_query'] = [
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => t('CQL Query'),
       '#default_value' => isset($item->cql_query) ? $item->cql_query : NULL,
       '#element_validate' => [
