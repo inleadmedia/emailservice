@@ -157,7 +157,7 @@ function emailservice_update_8003() {
 /**
  * Change field type for "CQL query" field.
  */
-function emailservice_update_8006() {
+function emailservice_update_8004() {
   $field_spec = [
     'type' => 'text',
     'size' => 'big',
