@@ -2,10 +2,12 @@
 
 namespace Drupal\emailservice\Plugin\Field\FieldWidget;
 
+use Drupal;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\taxonomy\Entity\Term;
+use Exception;
 use GuzzleHttp\Client;
 
 /**
@@ -82,7 +84,7 @@ class PreferencesSetWidget extends WidgetBase {
 
     $options = [];
     $vid = 'types_materials';
-    $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid);
+    $terms = Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid);
     foreach ($terms as $term) {
       $options[$term->tid] = $term->name;
     }
@@ -106,7 +108,12 @@ class PreferencesSetWidget extends WidgetBase {
     $alias = $form_state->get('municipality_alias');
 
     if (!empty($cql_query)) {
-      $url = \Drupal::config('lms.config')->get('lms_api_url');
+      $cache = Drupal::cache()->get('cql_validate.' . sha1($cql_query));
+      if (!empty($cache) && $cache->valid == TRUE) {
+        return;
+      }
+
+      $url = Drupal::config('lms.config')->get('lms_api_url');
 
       $delta = $element['#parents'][1];
       $categories_field= $form_state->getValue('field_types_categories');
@@ -118,8 +125,9 @@ class PreferencesSetWidget extends WidgetBase {
       try {
         $request = new Client();
         $request->get($uri);
+        Drupal::cache()->set('cql_validate.' . sha1($cql_query), 'valid');
       }
-      catch (\Exception $e) {
+      catch (Exception $e) {
         $form_state->setError($element, t('There are errors in search string. Please correct this.'));
       }
     }
