@@ -103,10 +103,6 @@ class SubscriptionManagerController extends ControllerBase {
             $result_item->url = $item_url . $object['id'];
             $result_item->subject = $category->label;
 
-            if (!empty($object['description'])) {
-              $result_item->description = $object['description'];
-            }
-
             if (!empty($object['author'])) {
               $result_item->creator = $object['author'];
             }
