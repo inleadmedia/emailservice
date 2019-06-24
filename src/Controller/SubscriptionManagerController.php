@@ -2,6 +2,7 @@
 
 namespace Drupal\emailservice\Controller;
 
+use Drupal;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
@@ -13,6 +14,7 @@ use Drupal\taxonomy\Entity\Term;
 use Drupal\user\Entity\User;
 use Egulias\EmailValidator\EmailValidator;
 use Egulias\EmailValidator\Validation\RFCValidation;
+use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,30 +37,30 @@ class SubscriptionManagerController extends ControllerBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   private function lmsRequest(string $nid, string $alias) {
-    $url = \Drupal::config('lms.config')->get('lms_api_url');
-    $covers_url = \Drupal::config('lms.config')->get('lms_covers_api_url');
+    $url = Drupal::config('lms.config')->get('lms_api_url');
+    $covers_url = Drupal::config('lms.config')->get('lms_covers_api_url');
 
-    $registered_materials = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
-      ->fields('epm', ['material_tid'])
-      ->condition('status', 1)
+    $registered_materials = Drupal::database()->select('node__field_types_categories', 'epm')
+      ->fields('epm', ['field_types_categories_material_tid'])
+      ->condition('field_types_categories_status', 1)
       ->condition('entity_id', $nid)
-      ->condition('material_tid', 0, '!=')
+      ->condition('field_types_categories_material_tid', 0, '!=')
       ->execute()
       ->fetchAll();
 
     $materials = [];
     foreach ($registered_materials as $registered_material) {
-      $materials[$registered_material->material_tid] = $registered_material->material_tid;
+      $materials[$registered_material->field_types_categories_material_tid] = $registered_material->field_types_categories_material_tid;
     }
 
-    $categories = \Drupal::database()->select('emailservice_preferences_mapping', 'epm')
-      ->fields('epm', ['cql_query', 'label', 'machine_name', 'material_tid'])
-      ->condition('epm.entity_id', $nid)
-      ->condition('epm.preference_type', 'field_types_categories')
-      ->condition('epm.status', 1)
-      ->condition('epm.material_tid', 0, '!=')
-      ->execute()
-      ->fetchAll();
+    $categories = Drupal::database()->select('node__field_types_categories', 'epm');
+    $categories->addField('epm', 'field_types_categories_cql_query', 'cql_query');
+    $categories->addField('epm', 'field_types_categories_label', 'label');
+    $categories->addField('epm', 'field_types_categories_machine_name', 'machine_name');
+    $categories->addField('epm', 'field_types_categories_material_tid', 'material_tid');
+    $categories->condition('epm.entity_id', $nid);
+    $categories->condition('epm.field_types_categories_material_tid', 0, '!=');
+    $categories = $categories->execute()->fetchAll();
 
     $node = Node::load($nid);
     $item_url = $node->get('field_url_for_item_page')->value;
@@ -69,7 +71,7 @@ class SubscriptionManagerController extends ControllerBase {
         if ($category->material_tid == $material) {
           $term = Term::load($material);
           if (empty($term)) {
-            \Drupal::logger('emailservice')->error($this->t('Nonexistent term with tid "@tid" was pushed for processing.', ['@tid' => $material]));
+            Drupal::logger('emailservice')->error($this->t('Nonexistent term with tid "@tid" was pushed for processing.', ['@tid' => $material]));
             break;
           }
           $type = $term->get('field_types_cql_query')->value;
@@ -77,14 +79,14 @@ class SubscriptionManagerController extends ControllerBase {
           $uri = $url . $alias . $query;
 
           try {
-            $content = \Drupal::service('emailservice.opensearch')
+            $content = Drupal::service('emailservice.opensearch')
               ->request($uri)
               ->get('content');
           }
-          catch (\Exception $e) {
-            \Drupal::messenger()
+          catch (Exception $e) {
+            Drupal::messenger()
               ->addError($this->t("@message", ["@message" => $e->getMessage()]));
-            \Drupal::logger('emailservice')
+            Drupal::logger('emailservice')
               ->error($this->t("@message", ["@message" => $e->getMessage()]));
             $content = '';
           }
@@ -234,13 +236,13 @@ class SubscriptionManagerController extends ControllerBase {
         $content = Json::encode($return);
       }
       else {
-        \Drupal::logger('emailservice')->info($content);
+        Drupal::logger('emailservice')->info($content);
       }
     }
-    catch (\Exception $exception) {
-      \Drupal::logger('emailservice')
+    catch (Exception $exception) {
+      Drupal::logger('emailservice')
         ->error($exception->getMessage());
-      \Drupal::messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
+      Drupal::messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
     }
 
     $renderer = [
@@ -263,7 +265,7 @@ class SubscriptionManagerController extends ControllerBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   private function checkMunicipalityParam($param) {
-    $users = \Drupal::entityTypeManager()
+    $users = Drupal::entityTypeManager()
       ->getStorage('user')
       ->loadByProperties([
         'field_alias' => $param,
@@ -287,8 +289,8 @@ class SubscriptionManagerController extends ControllerBase {
     $email_parameter = '';
     $cs_parameter = '';
 
-    $municipality = \Drupal::request()->get('municipality');
-    $params = \Drupal::request()->query->all();
+    $municipality = Drupal::request()->get('municipality');
+    $params = Drupal::request()->query->all();
     $params['municipality'] = $municipality;
     if (!empty($params['email'])) {
       $email_parameter = $params['email'];
@@ -313,7 +315,7 @@ class SubscriptionManagerController extends ControllerBase {
       $valid_user = $this->checkMunicipalityParam($params['municipality']);
     }
     if (!empty($valid_user)) {
-      $nids = \Drupal::entityQuery('node')
+      $nids = Drupal::entityQuery('node')
         ->condition('status', 1)
         ->condition('uid', $valid_user->id())
         ->execute();
@@ -361,9 +363,9 @@ class SubscriptionManagerController extends ControllerBase {
           }
         }
 
-        $form = \Drupal::formBuilder()
+        $form = Drupal::formBuilder()
           ->getForm('\Drupal\emailservice\Form\EmailserviceSubscriberForm', $return['#subscriber_info'], $node);
-        $form = \Drupal::service('renderer')->renderRoot($form);
+        $form = Drupal::service('renderer')->renderRoot($form);
         $return['#form'] = $form;
 
         $return += [
@@ -372,7 +374,7 @@ class SubscriptionManagerController extends ControllerBase {
         ];
       }
     }
-    $rendered = \Drupal::service('renderer')->render($return);
+    $rendered = Drupal::service('renderer')->render($return);
     return Response::create($rendered);
   }
 
@@ -431,14 +433,14 @@ class SubscriptionManagerController extends ControllerBase {
 
     $values = array('type' => 'subscription');
 
-    $node = \Drupal::entityTypeManager()
+    $node = Drupal::entityTypeManager()
       ->getStorage('node')
       ->create($values);
 
-    $form = \Drupal::entityTypeManager()
+    $form = Drupal::entityTypeManager()
       ->getFormObject('node', 'default')
       ->setEntity($node);
-    $form = \Drupal::formBuilder()->getForm($form);
+    $form = Drupal::formBuilder()->getForm($form);
 
     $value = bin2hex(random_bytes(24));
     $element = $form["field_shared_secret_key"];
@@ -455,8 +457,8 @@ class SubscriptionManagerController extends ControllerBase {
   public static function checkSubscriber() {
     $response = NULL;
     $existing = FALSE;
-    $possible_email = \Drupal::request()->get('email');
-    $mailinglist = \Drupal::request()->get('mailinglist');
+    $possible_email = Drupal::request()->get('email');
+    $mailinglist = Drupal::request()->get('mailinglist');
 
     $valid = FALSE;
 
@@ -464,7 +466,7 @@ class SubscriptionManagerController extends ControllerBase {
       $validator = new EmailValidator();
       $valid = $validator->isValid($possible_email, new RFCValidation());
     }
-    catch (\Exception $e) {
+    catch (Exception $e) {
       print $e->getMessage();
     }
 
