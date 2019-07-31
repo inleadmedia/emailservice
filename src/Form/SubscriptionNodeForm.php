@@ -32,7 +32,7 @@ class SubscriptionNodeForm extends NodeForm {
       foreach ($fields as $alias => $field) {
         $field_values = $form_state->getValue($field);
 
-        foreach ($field_values as $field_value) {
+        foreach ($field_values as $key => $field_value) {
 
           if ($field_value['machine_name'] == 'stub' && !empty($field_value['label'])) {
             $machine_name = new SubscriptionManagerController();
@@ -45,6 +45,30 @@ class SubscriptionNodeForm extends NodeForm {
               ->fields(['status' => 0])
               ->condition('machine_name', $field_value['machine_name'])
               ->execute();
+          }
+
+          // Update changed preferences.
+          $element_value = $form[$field]['widget'][$key]['cql_query']['#value'];
+          $element_default_value = $form[$field]['widget'][$key]['cql_query']['#default_value'];
+
+          if ($element_value != $element_default_value) {
+            // Find "id" of generic item and change status to "0".
+            $original_preference_id = $connection->select('emailservice_preferences_mapping', 'epm')
+              ->fields('epm', ['id'])
+              ->condition('cql_query', $element_default_value)
+              ->condition('status', 1)
+              ->condition('entity_id', $node->id())
+              ->execute()
+              ->fetchAll();
+
+            if (!empty($original_preference_id)) {
+              $original_preference_id = end($original_preference_id);
+
+              $connection->update('emailservice_preferences_mapping')
+                ->fields(['status' => 0])
+                ->condition('id', $original_preference_id->id)
+                ->execute();
+            }
           }
 
           if (!empty($field_value['label'])) {

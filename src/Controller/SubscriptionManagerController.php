@@ -40,27 +40,27 @@ class SubscriptionManagerController extends ControllerBase {
     $url = Drupal::config('lms.config')->get('lms_api_url');
     $covers_url = Drupal::config('lms.config')->get('lms_covers_api_url');
 
-    $registered_materials = Drupal::database()->select('node__field_types_categories', 'epm')
-      ->fields('epm', ['field_types_categories_material_tid'])
-      ->condition('field_types_categories_status', 1)
+    $registered_materials = Drupal::database()->select('emailservice_preferences_mapping', 'epm')
+      ->fields('epm', ['material_tid'])
+      ->condition('status', 1)
       ->condition('entity_id', $nid)
-      ->condition('field_types_categories_material_tid', 0, '!=')
+      ->condition('material_tid', 0, '!=')
       ->execute()
       ->fetchAll();
 
     $materials = [];
     foreach ($registered_materials as $registered_material) {
-      $materials[$registered_material->field_types_categories_material_tid] = $registered_material->field_types_categories_material_tid;
+      $materials[$registered_material->material_tid] = $registered_material->material_tid;
     }
 
-    $categories = Drupal::database()->select('node__field_types_categories', 'epm');
-    $categories->addField('epm', 'field_types_categories_cql_query', 'cql_query');
-    $categories->addField('epm', 'field_types_categories_label', 'label');
-    $categories->addField('epm', 'field_types_categories_machine_name', 'machine_name');
-    $categories->addField('epm', 'field_types_categories_material_tid', 'material_tid');
-    $categories->condition('epm.entity_id', $nid);
-    $categories->condition('epm.field_types_categories_material_tid', 0, '!=');
-    $categories = $categories->execute()->fetchAll();
+    $categories = Drupal::database()->select('emailservice_preferences_mapping', 'epm')
+      ->fields('epm', ['cql_query', 'label', 'machine_name', 'material_tid'])
+      ->condition('epm.entity_id', $nid)
+      ->condition('epm.preference_type', 'field_types_categories')
+      ->condition('epm.status', 1)
+      ->condition('epm.material_tid', 0, '!=')
+      ->execute()
+      ->fetchAll();
 
     $node = Node::load($nid);
     $item_url = $node->get('field_url_for_item_page')->value;

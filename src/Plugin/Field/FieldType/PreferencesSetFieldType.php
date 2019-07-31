@@ -144,6 +144,7 @@ class PreferencesSetFieldType extends FieldItemBase {
     $connection->merge('emailservice_preferences_mapping')
       ->key('machine_name', $db_pref['machine_name'])
       ->key('material_tid', $db_pref['material_tid'])
+      ->key('status', $db_pref['status'])
       ->fields($db_pref)
       ->execute();
   }
