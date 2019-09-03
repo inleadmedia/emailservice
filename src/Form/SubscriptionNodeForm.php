@@ -47,27 +47,31 @@ class SubscriptionNodeForm extends NodeForm {
               ->execute();
           }
 
-          // Update changed preferences.
-          $element_value = $form[$field]['widget'][$key]['cql_query']['#value'];
-          $element_default_value = $form[$field]['widget'][$key]['cql_query']['#default_value'];
+          $fields_to_check = ['label', 'cql_query', 'material_tid'];
 
-          if ($element_value != $element_default_value) {
-            // Find "id" of generic item and change status to "0".
-            $original_preference_id = $connection->select('emailservice_preferences_mapping', 'epm')
-              ->fields('epm', ['id'])
-              ->condition('cql_query', $element_default_value)
-              ->condition('status', 1)
-              ->condition('entity_id', $node->id())
-              ->execute()
-              ->fetchAll();
+          foreach ($fields_to_check as $item) {
+            // Update changed preferences.
+            $element_value = $form[$field]['widget'][$key][$item]['#value'];
+            $element_default_value = $form[$field]['widget'][$key][$item]['#default_value'];
 
-            if (!empty($original_preference_id)) {
-              $original_preference_id = end($original_preference_id);
+            if ($element_value != $element_default_value) {
+              // Find "id" of generic item and change status to "0".
+              $original_preference_id = $connection->select('emailservice_preferences_mapping', 'epm')
+                ->fields('epm', ['id'])
+                ->condition($item, $element_default_value)
+                ->condition('status', 1)
+                ->condition('entity_id', $node->id())
+                ->execute()
+                ->fetchAll();
 
-              $connection->update('emailservice_preferences_mapping')
-                ->fields(['status' => 0])
-                ->condition('id', $original_preference_id->id)
-                ->execute();
+              if (!empty($original_preference_id)) {
+                $original_preference_id = end($original_preference_id);
+
+                $connection->update('emailservice_preferences_mapping')
+                  ->fields(['status' => 0])
+                  ->condition('id', $original_preference_id->id)
+                  ->execute();
+              }
             }
           }
 
