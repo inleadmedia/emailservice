@@ -203,7 +203,7 @@ class EmailserviceSubscriberForm extends FormBase {
       $subscriber_data_remote = $connect->findSubscriber($form_data['email_address']);
       foreach ($subscriber_data_remote['subscribers'] as $subscriber) {
         if (!empty($subscriber['extra_fields'])) {
-          $subs_categories = $subscriber["extra_fields"]["new_arrivals_categories"];
+          $subs_categories = $subscriber["extra_fields"]["new_arrivals_categories"] ?? [];
         }
       }
     }
