@@ -8,6 +8,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Link;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
@@ -15,6 +16,8 @@ use Drupal\user\Entity\User;
 use Egulias\EmailValidator\EmailValidator;
 use Egulias\EmailValidator\Validation\RFCValidation;
 use Exception;
+use GuzzleHttp\Client;
+use Psr\Log\LogLevel;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -75,13 +78,13 @@ class SubscriptionManagerController extends ControllerBase {
             break;
           }
           $type = $term->get('field_types_cql_query')->value;
-          $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
+          $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200&_source=emailservice";
           $uri = $url . $alias . $query;
 
           try {
-            $content = Drupal::service('emailservice.opensearch')
-              ->request($uri)
-              ->get('content');
+            $client = new Client();
+            $request = $client->get($uri);
+            $content = $request->getBody()->getContents();
           }
           catch (Exception $e) {
             Drupal::messenger()
@@ -140,7 +143,6 @@ class SubscriptionManagerController extends ControllerBase {
     $preheader = 'Her er en oversigt over materialer, der er bestilt / indgået på bibliotekerne de seneste/sidste 7 dage.';
 
     $this->newsletter = $this->prepareFeed($title, $preheader, $this->newsletter);
-
   }
 
   /**
@@ -212,7 +214,8 @@ class SubscriptionManagerController extends ControllerBase {
    *   Renderable array.
    */
   public function sendNewsletter($nid) {
-    $content = $this->t('Request to LMS did not returned any results. The feed will not be pushed.');
+    $content = '';
+    /** @var \Drupal\node\Entity\Node $node */
     $node = Node::load($nid);
 
     try {
@@ -232,7 +235,22 @@ class SubscriptionManagerController extends ControllerBase {
         $content = Json::encode($return);
       }
       else {
-        Drupal::logger('emailservice')->info($content);
+        $node_link = Link::createFromRoute($node->getTitle(), 'entity.node.canonical', ['node' => $node->id()], ['absolute' => TRUE]);
+        $content = $this->t('Request to LMS from @node/@alias did not returned any results. The feed will not be pushed.', [
+          '@node' => $node_link->toString(),
+          '@alias' => $alias,
+        ]);
+
+        // Send mail to site admin.
+        $mailManager = \Drupal::service('plugin.manager.mail');
+        $key = 'lms_request_notify_on_empty';
+        $to = \Drupal::config('system.site')->get('mail');
+        $params['message'] = $content;
+        $mailManager->mail('emailservice', $key, $to, NULL, $params, NULL);
+
+        // Log detailed warning into dblog.
+        $context['uid'] = (int) $owner->id();
+        Drupal::service('emailservice.logger')->log(LogLevel::WARNING, $content, $context);
       }
     }
     catch (Exception $exception) {
@@ -241,11 +259,9 @@ class SubscriptionManagerController extends ControllerBase {
       Drupal::messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
     }
 
-    $renderer = [
+    return [
       '#markup' => $content,
     ];
-
-    return $renderer;
   }
 
   /**

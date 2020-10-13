@@ -5,6 +5,7 @@
  * Emailservice module functionality.
  */
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultForbidden;
 use Drupal\Core\Form\FormStateInterface;
@@ -297,5 +298,18 @@ function emailservice_preprocess_input(&$variables) {
         $variables['attributes']['class'][] = 'is-invalid';
       }
     }
+  }
+}
+
+/**
+ * Implements hook_mail().
+ */
+function emailservice_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'lms_request_notify_on_empty':
+      $message['from'] = \Drupal::config('system.site')->get('mail');
+      $message['subject'] = t('Emailservice: Warning on LMS request execution.');
+      $message['body'][] = Html::escape($params['message']);
+      break;
   }
 }
