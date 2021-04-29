@@ -129,6 +129,7 @@ class PreferencesSetWidget extends WidgetBase {
       }
       catch (Exception $e) {
         $form_state->setError($element, t('There are errors in search string. Please correct this.'));
+        Drupal::logger('emailservice')->error($e->getMessage());
       }
     }
   }
