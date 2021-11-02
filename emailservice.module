@@ -313,3 +313,16 @@ function emailservice_mail($key, &$message, $params) {
       break;
   }
 }
+
+/**
+ * Implements hook_preprocess().
+ */
+function emailservice_preprocess(&$variables, $hook) {
+  if ('checkboxes' == $hook) {
+    if ($variables['element']['#id'] == 'preference_categories') {
+      if (count($variables['element']['#options']) > 20) {
+        $variables['attributes']['class'][] = 'es-card-columns';
+      }
+    }
+  }
+}

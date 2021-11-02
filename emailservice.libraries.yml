@@ -2,9 +2,9 @@ custom.emailservice:
   version: VERSION
   js:
     emailservice.js: {}
-#  css:
-#    theme:
-#      css/field_ui.admin.css: {}
+  css:
+    theme:
+      css/emailservice.css: {}
   dependencies:
     - core/jquery
     - core/drupal
