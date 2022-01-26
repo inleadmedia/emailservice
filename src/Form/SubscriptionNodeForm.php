@@ -4,6 +4,7 @@ namespace Drupal\emailservice\Form;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\emailservice\Controller\SubscriptionManagerController;
+use Drupal\emailservice\Helpers\PreferencesSetHelper;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\NodeForm;
 
@@ -35,8 +36,7 @@ class SubscriptionNodeForm extends NodeForm {
         foreach ($field_values as $key => $field_value) {
 
           if ($field_value['machine_name'] == 'stub' && !empty($field_value['label'])) {
-            $machine_name = new SubscriptionManagerController();
-            $machine_name = $machine_name->generateMachineName($node, $field_value['label'], $field_value['material_tid']);
+            $machine_name = PreferencesSetHelper::generateMachineName($node, $field_value['label'], $field_value['material_tid']);
             $field_value['machine_name'] = $machine_name;
           }
 

@@ -7,6 +7,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 use Drupal\emailservice\Controller\SubscriptionManagerController;
+use Drupal\emailservice\Helpers\PreferencesSetHelper;
 
 /**
  * Plugin implementation of the 'preferences_set_field_type' field type.
@@ -116,8 +117,7 @@ class PreferencesSetFieldType extends FieldItemBase {
    * {@inheritdoc}
    */
   public function preSave() {
-    $machine_name = new SubscriptionManagerController();
-    $machine_name = $machine_name->generateMachineName($this->getEntity(), $this->getValue()['label'], $this->getValue()['material_tid']);
+    $machine_name = PreferencesSetHelper::generateMachineName($this->getEntity(), $this->getValue()['label'], $this->getValue()['material_tid']);
     $this->set('machine_name', $machine_name);
   }
 

@@ -10,14 +10,13 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\emailservice\PeytzmailConnect;
+use Drupal\emailservice\Services\LmsRequestService;
 use Drupal\node\Entity\Node;
-use Drupal\taxonomy\Entity\Term;
-use Drupal\user\Entity\User;
 use Egulias\EmailValidator\EmailValidator;
 use Egulias\EmailValidator\Validation\RFCValidation;
 use Exception;
-use GuzzleHttp\Client;
 use Psr\Log\LogLevel;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -29,107 +28,18 @@ class SubscriptionManagerController extends ControllerBase {
   private $newsletter;
 
   /**
-   * Form and send request to LMS.
-   *
-   * @param string $nid
-   *   Node id of subscriber node.
-   * @param string $alias
-   *   Library user alias.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @var LmsRequestService
    */
-  private function lmsRequest(string $nid, string $alias) {
-    $url = Drupal::config('lms.config')->get('lms_api_url');
-    $covers_url = Drupal::config('lms.config')->get('lms_covers_api_url');
+  protected $lms;
 
-    $registered_materials = Drupal::database()->select('emailservice_preferences_mapping', 'epm')
-      ->fields('epm', ['material_tid'])
-      ->condition('status', 1)
-      ->condition('entity_id', $nid)
-      ->condition('material_tid', 0, '!=')
-      ->execute()
-      ->fetchAll();
+  public function __construct(LmsRequestService $lms) {
+    $this->lms = $lms;
+  }
 
-    $materials = [];
-    foreach ($registered_materials as $registered_material) {
-      $materials[$registered_material->material_tid] = $registered_material->material_tid;
-    }
-
-    $categories = Drupal::database()->select('emailservice_preferences_mapping', 'epm')
-      ->fields('epm', ['cql_query', 'label', 'machine_name', 'material_tid'])
-      ->condition('epm.entity_id', $nid)
-      ->condition('epm.preference_type', 'field_types_categories')
-      ->condition('epm.status', 1)
-      ->condition('epm.material_tid', 0, '!=')
-      ->execute()
-      ->fetchAll();
-
-    $node = Node::load($nid);
-    $item_url = $node->get('field_url_for_item_page')->value;
-
-    $results = [];
-    foreach ($materials as $material) {
-      foreach ($categories as $category) {
-        if ($category->material_tid == $material) {
-          $term = Term::load($material);
-          if (empty($term)) {
-            Drupal::logger('emailservice')->error($this->t('Nonexistent term with tid "@tid" was pushed for processing.', ['@tid' => $material]));
-            break;
-          }
-          $type = $term->get('field_types_cql_query')->value;
-          $query = "/search?query=(($type) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200&_source=emailservice";
-          $uri = $url . $alias . $query;
-
-          try {
-            $client = new Client();
-            $request = $client->get($uri);
-            $content = $request->getBody()->getContents();
-          }
-          catch (Exception $e) {
-            Drupal::messenger()
-              ->addError($this->t("@message", ["@message" => $e->getMessage()]));
-            Drupal::logger('emailservice')
-              ->error($this->t("@message", ["@message" => $e->getMessage()]));
-            $content = '';
-          }
-
-          $content = Json::decode($content);
-
-          $content = array_map(function ($object) use ($alias, $category, $item_url, $covers_url) {
-            $result_item = new \stdClass();
-
-            $result_item->identifier = $object['id'];
-
-            $result_item->title = $object['title'];
-            $result_item->type = $object['type'];
-            $result_item->url = $item_url . $object['id'];
-            $result_item->subject = $category->label;
-
-            if (!empty($object['author'])) {
-              $result_item->creator = $object['author'];
-            }
-
-            if (!empty($object['year'])) {
-              $result_item->date = $object['year'];
-            }
-
-            if (!empty($object['cover'])) {
-              $result_item->image = $covers_url . $alias . $object['cover'] . '?size=210&crop=210x315';
-            }
-
-            $result_item->type_key = $this->filterPreference($object['type']);
-            $result_item->subject_key = $category->machine_name;
-
-            return $result_item;
-          }, $content['objects']);
-
-          $results = array_merge($results, $content);
-        }
-      }
-    }
-
-    $this->newsletter = $results;
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('emailservice.lms')
+    );
   }
 
   /**
@@ -146,19 +56,6 @@ class SubscriptionManagerController extends ControllerBase {
   }
 
   /**
-   * Prepare preference param.
-   *
-   * @param string $preference
-   *   Preference option.
-   *
-   * @return string
-   *   Lowercase preference.
-   */
-  private function filterPreference($preference) {
-    return strtolower($preference);
-  }
-
-  /**
    * Cleanup results.
    *
    * @param array $results
@@ -167,10 +64,8 @@ class SubscriptionManagerController extends ControllerBase {
    * @return array
    *   Array without duplicated items.
    */
-  private function removeDuplicates(array $results = NULL) {
-    $results = array_map("unserialize", array_unique(array_map("serialize", $results)));
-
-    return $results;
+  private function removeDuplicates(array $results = []) {
+    return array_map("unserialize", array_unique(array_map("serialize", $results)));
   }
 
   /**
@@ -221,8 +116,9 @@ class SubscriptionManagerController extends ControllerBase {
     try {
       $owner = $node->getOwner();
       $alias = $owner->get('field_alias')->getString();
+      $itemUrl = $node->get('field_url_for_item_page')->value;
 
-      $this->lmsRequest($nid, $alias);
+      $this->newsletter = $this->lms->lmsRequest($nid, $alias, $itemUrl);
 
       if (!empty($this->newsletter)) {
         $this->prepareNewsletter();
@@ -230,7 +126,7 @@ class SubscriptionManagerController extends ControllerBase {
         $mailinglist = $node->get('field_mailing_list_id')->getString();
 
         $connect = new PeytzmailConnect();
-        $return = $connect->createAndSend($mailinglist, $this->newsletter);
+        $return = $connect->createAndSend($mailinglist, (object) $this->newsletter);
 
         $content = Json::encode($return);
       }
@@ -390,46 +286,6 @@ class SubscriptionManagerController extends ControllerBase {
     return Response::create($rendered);
   }
 
-  /**
-   * Helper for generating machine name.
-   *
-   * @param object $node
-   *   Node on which we are acting.
-   * @param string $label
-   *   The label of preference which have to be added.
-   * @param int $tid
-   *   Term id.
-   *
-   * @return string
-   *   Generated machine name for category key.
-   */
-  public function generateMachineName($node, $label, $tid) {
-    $user = $node->get('uid')->target_id;
-    $loaded_user = User::load($user);
-
-    $prefix = $loaded_user->get('field_alias')->value;
-
-    $term = Term::load($tid);
-    $material_type = self::lowerDanishTerms($term->getName());
-
-    $machine_name = self::lowerDanishTerms($label);
-
-    return $prefix . '_' . $material_type . '-' . $machine_name;
-  }
-
-  /**
-   * Lowerize words.
-   *
-   * @param string $term
-   *   String to be lowerized.
-   *
-   * @return string|string[]|null
-   *   Lowerized string.
-   */
-  public static function lowerDanishTerms(string $term) {
-    $term_name = mb_strtolower($term, 'UTF-8');
-    return preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
-  }
 
   /**
    * Generate salt.

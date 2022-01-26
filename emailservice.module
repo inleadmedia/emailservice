@@ -242,7 +242,7 @@ function emailservice_cron() {
 
   // Send request to peytz mail.
   foreach ($nids as $nid) {
-    $manager = new SubscriptionManagerController();
+    $manager = new SubscriptionManagerController(\Drupal::service('emailservice.lms'));
     $manager->sendNewsletter($nid);
   }
 }
