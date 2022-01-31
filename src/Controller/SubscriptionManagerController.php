@@ -125,10 +125,10 @@ class SubscriptionManagerController extends ControllerBase {
 
         $mailinglist = $node->get('field_mailing_list_id')->getString();
 
-        $connect = new PeytzmailConnect();
-        $return = $connect->createAndSend($mailinglist, (object) $this->newsletter);
+//        $connect = new PeytzmailConnect();
+//        $return = $connect->createAndSend($mailinglist, (object) $this->newsletter);
 
-        $content = Json::encode($return);
+//        $content = Json::encode($return);
       }
       else {
         $node_link = Link::createFromRoute($node->getTitle(), 'entity.node.canonical', ['node' => $node->id()], ['absolute' => TRUE]);
@@ -378,5 +378,4 @@ class SubscriptionManagerController extends ControllerBase {
 
     return JsonResponse::create($response);
   }
-
 }
