@@ -47,7 +47,7 @@ class NewsletterBuildAndSendQueue extends QueueWorkerBase implements ContainerFa
     $manager->sendNewsletter($data->nid);
     $e = microtime(TRUE);
     $this->logger->get('emailservice.queue')
-      ->warning('Processed <strong>@nid</strong> in @microtime', ['@nid' => $data->nid, '@microtime' => $e-$s]);
+      ->warning('Processed nid: @nid in @microtime', ['@nid' => $data->nid, '@microtime' => $e-$s]);
   }
 
 }
