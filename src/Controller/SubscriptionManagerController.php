@@ -378,5 +378,4 @@ class SubscriptionManagerController extends ControllerBase {
 
     return JsonResponse::create($response);
   }
-
 }

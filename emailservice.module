@@ -240,10 +240,16 @@ function emailservice_cron() {
     ->condition('status', 1)
     ->execute();
 
-  // Send request to peytz mail.
+  /** @var \Drupal\Core\Queue\QueueFactory $queue_factory */
+  $queue_factory = \Drupal::service('queue');
+  /** @var Drupal\Core\Queue\DatabaseQueue $queue */
+  $queue = $queue_factory->get('newsletter_build_and_send');
+
+  // Add subscription node id to queue.
   foreach ($nids as $nid) {
-    $manager = new SubscriptionManagerController(\Drupal::service('emailservice.lms'));
-    $manager->sendNewsletter($nid);
+    $item = new stdClass();
+    $item->nid = $nid;
+    $queue->createItem($item);
   }
 }
 
