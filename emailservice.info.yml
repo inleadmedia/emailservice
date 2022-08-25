@@ -2,7 +2,7 @@ name: 'Email Subscription Manager'
 description: 'Allow citizens in the Danish municipals subscribe to preference-controlled email notifications with new arrivals to their local library.'
 package: 'Email Service'
 type: module
-core: 8.x
+core_version_requirement: ^8.8.0 || ^9 || ^10
 dependencies:
   - 'drupal:color_field'
   - 'drupal:field_group'
