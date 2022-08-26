@@ -1,4 +1,5 @@
-langcode: en
+uuid: a6dd8d93-3faf-4bf6-8dee-024608699ca2
+langcode: da
 status: true
 dependencies:
   config:
@@ -7,6 +8,7 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
+    - field.field.node.subscription.field_newsletter_heading
     - field.field.node.subscription.field_shared_secret_key
     - field.field.node.subscription.field_types_categories
     - field.field.node.subscription.field_url_for_item_page
@@ -15,7 +17,26 @@ dependencies:
   module:
     - color_field
     - emailservice
+    - field_group
     - image
+    - text
+third_party_settings:
+  field_group:
+    group_inlead:
+      children:
+        - field_mailing_list_id
+        - field_shared_secret_key
+      parent_name: ''
+      weight: 8
+      format_type: fieldset
+      format_settings:
+        id: ''
+        classes: ''
+        description: 'OBS: Disse må ikke ændres!'
+        required_fields: true
+      label: 'Vedligeholdes af Inlead'
+_core:
+  default_config_hash: mADLWJApeVHxrESUOlDo_ymujdQiXhnoC72o2V4Uotc
 id: node.subscription.default
 targetEntityType: node
 bundle: subscription
@@ -23,15 +44,19 @@ mode: default
 content:
   field_buttons_color:
     weight: 5
-    settings: {  }
+    settings:
+      placeholder_color: ''
+      placeholder_opacity: ''
     third_party_settings: {  }
-    type: color_field_widget_html5
+    type: color_field_widget_default
     region: content
   field_headline_color:
     weight: 4
-    settings: {  }
+    settings:
+      placeholder_color: ''
+      placeholder_opacity: ''
     third_party_settings: {  }
-    type: color_field_widget_html5
+    type: color_field_widget_default
     region: content
   field_intro_text:
     weight: 1
@@ -39,7 +64,7 @@ content:
       rows: 5
       placeholder: ''
     third_party_settings: {  }
-    type: string_textarea
+    type: text_textarea
     region: content
   field_logo:
     weight: 3
@@ -57,26 +82,41 @@ content:
     third_party_settings: {  }
     type: string_textfield
     region: content
-  field_shared_secret_key:
-    weight: 8
-    settings: {  }
-    third_party_settings: {  }
-    type: salt_widget_type
-    region: content
-  field_types_categories:
-    weight: 9
-    settings: {  }
-    third_party_settings: {  }
-    type: preferences_set_widget
-    region: content
-  field_url_for_item_page:
-    weight: 7
+  field_newsletter_heading:
+    weight: 26
     settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }
     type: string_textfield
     region: content
+  field_shared_secret_key:
+    weight: 7
+    settings: {  }
+    third_party_settings: {  }
+    type: salt_widget_type
+    region: content
+  field_types_categories:
+    weight: 7
+    settings: {  }
+    third_party_settings: {  }
+    type: preferences_set_widget
+    region: content
+  field_url_for_item_page:
+    weight: 6
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
   title:
     type: string_textfield
     weight: 0
@@ -87,12 +127,13 @@ content:
     third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
-    weight: 10
+    weight: 9
     region: content
     settings:
       match_operator: CONTAINS
       size: 60
       placeholder: ''
+      match_limit: 10
     third_party_settings: {  }
 hidden:
   created: true

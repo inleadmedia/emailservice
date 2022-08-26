@@ -32,6 +32,11 @@ class SubscriptionManagerController extends ControllerBase {
    */
   protected $lms;
 
+  /**
+   * @var Node
+   */
+  protected $node;
+
   public function __construct(LmsRequestService $lms) {
     $this->lms = $lms;
   }
@@ -47,9 +52,7 @@ class SubscriptionManagerController extends ControllerBase {
    */
   private function prepareNewsletter() {
     $this->newsletter = $this->removeDuplicates($this->newsletter);
-
-    $week = new DrupalDateTime();
-    $title = $this->t('New arrivals - Week @weekCount', ['@weekCount' => $week->format('W')]);
+    $title = $this->buildTitle();
     $preheader = 'Her er en oversigt over materialer, der er bestilt / indgået på bibliotekerne de seneste/sidste 7 dage.';
 
     $this->newsletter = $this->prepareFeed($title, $preheader, $this->newsletter);
@@ -110,20 +113,19 @@ class SubscriptionManagerController extends ControllerBase {
    */
   public function sendNewsletter($nid) {
     $content = '';
-    /** @var \Drupal\node\Entity\Node $node */
-    $node = Node::load($nid);
+    $this->node = Node::load($nid);
 
     try {
-      $owner = $node->getOwner();
+      $owner = $this->node->getOwner();
       $alias = $owner->get('field_alias')->getString();
-      $itemUrl = $node->get('field_url_for_item_page')->value;
+      $itemUrl = $this->node->get('field_url_for_item_page')->value;
 
       $this->newsletter = $this->lms->lmsRequest($nid, $alias, $itemUrl);
 
       if (!empty($this->newsletter)) {
         $this->prepareNewsletter();
 
-        $mailinglist = $node->get('field_mailing_list_id')->getString();
+        $mailinglist = $this->node->get('field_mailing_list_id')->getString();
 
         $connect = new PeytzmailConnect();
         $return = $connect->createAndSend($mailinglist, (object) $this->newsletter);
@@ -131,7 +133,7 @@ class SubscriptionManagerController extends ControllerBase {
         $content = Json::encode($return);
       }
       else {
-        $node_link = Link::createFromRoute($node->getTitle(), 'entity.node.canonical', ['node' => $node->id()], ['absolute' => TRUE]);
+        $node_link = Link::createFromRoute($this->node->getTitle(), 'entity.node.canonical', ['node' => $this->node->id()], ['absolute' => TRUE]);
         $content = $this->t('Request to LMS from @node/@alias did not returned any results. The feed will not be pushed.', [
           '@node' => $node_link->toString(),
           '@alias' => $alias,
@@ -377,5 +379,21 @@ class SubscriptionManagerController extends ControllerBase {
     }
 
     return JsonResponse::create($response);
+  }
+
+  /**
+   * Build newsletter message header.
+   *
+   * @return string
+   */
+  public function buildTitle() {
+    $week = new DrupalDateTime();
+
+    $title = $this->node->get('field_newsletter_heading')->getFieldDefinition()->getDefaultValue($this->node)[0]['value'];
+    if (!empty($this->node->get('field_newsletter_heading')->value)) {
+      $title = $this->node->get('field_newsletter_heading')->value;
+    }
+
+    return $title . ' - ' . $this->t('Week @week', ['@week' => $week->format('W')]);
   }
 }

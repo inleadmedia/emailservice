@@ -1,4 +1,5 @@
-langcode: en
+uuid: 70cd80a8-ce88-48ba-baa1-529c6bc17bde
+langcode: da
 status: true
 dependencies:
   config:
@@ -8,6 +9,8 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
+    - field.field.node.subscription.field_newsletter_heading
+    - field.field.node.subscription.field_shared_secret_key
     - field.field.node.subscription.field_types_categories
     - field.field.node.subscription.field_url_for_item_page
     - image.style.thumbnail
@@ -16,6 +19,8 @@ dependencies:
     - color_field
     - image
     - user
+_core:
+  default_config_hash: LbnScH8-yICzNoum5ohOXJkThX8A0OV2wnRYyfzvpeI
 id: node.subscription.teaser
 targetEntityType: node
 bundle: subscription
@@ -28,7 +33,7 @@ content:
     label: inline
     settings:
       format: hex
-      opacity: '1'
+      opacity: true
     third_party_settings: {  }
   field_headline_color:
     type: color_field_formatter_text
@@ -37,7 +42,7 @@ content:
     label: inline
     settings:
       format: hex
-      opacity: '1'
+      opacity: true
     third_party_settings: {  }
   field_logo:
     type: image
@@ -46,7 +51,7 @@ content:
     label: hidden
     settings:
       image_style: thumbnail
-      image_link: ''
+      image_link: content
     third_party_settings: {  }
   field_mailing_list_id:
     type: string
@@ -64,12 +69,10 @@ content:
     settings:
       link_to_entity: false
     third_party_settings: {  }
-  links:
-    weight: 5
-    region: content
-    settings: {  }
-    third_party_settings: {  }
 hidden:
   field_intro_text: true
+  field_newsletter_heading: true
+  field_shared_secret_key: true
   field_types_categories: true
   langcode: true
+  links: true

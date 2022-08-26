@@ -1,4 +1,5 @@
-langcode: en
+uuid: 037cf7ec-3271-4b8b-8e94-37b5808cc542
+langcode: da
 status: true
 dependencies:
   config:
@@ -7,6 +8,7 @@ dependencies:
     - field.field.node.subscription.field_intro_text
     - field.field.node.subscription.field_logo
     - field.field.node.subscription.field_mailing_list_id
+    - field.field.node.subscription.field_newsletter_heading
     - field.field.node.subscription.field_shared_secret_key
     - field.field.node.subscription.field_types_categories
     - field.field.node.subscription.field_url_for_item_page
@@ -14,38 +16,46 @@ dependencies:
     - node.type.subscription
   module:
     - color_field
-    - emailservice
     - image
+    - text
     - user
+_core:
+  default_config_hash: ay_kl5aQFWHO8vsxSyeGLmvjsfr_PJBPF4XV0lDx-WM
 id: node.subscription.default
 targetEntityType: node
 bundle: subscription
 mode: default
 content:
   field_buttons_color:
-    type: color_field_formatter_text
-    weight: 6
+    type: color_field_formatter_swatch
+    weight: 4
     region: content
-    label: inline
+    label: above
     settings:
-      format: hex
-      opacity: '1'
+      opacity: true
+      shape: square
+      width: '50'
+      height: '50'
+      data_attribute: false
     third_party_settings: {  }
   field_headline_color:
-    type: color_field_formatter_text
-    weight: 5
+    type: color_field_formatter_swatch
+    weight: 3
     region: content
-    label: inline
+    label: above
     settings:
-      format: hex
-      opacity: '1'
+      opacity: true
+      shape: square
+      width: '50'
+      height: '50'
+      data_attribute: false
     third_party_settings: {  }
   field_intro_text:
     weight: 1
     label: above
     settings: {  }
     third_party_settings: {  }
-    type: basic_string
+    type: text_default
     region: content
   field_logo:
     weight: 0
@@ -56,40 +66,25 @@ content:
     third_party_settings: {  }
     type: image
     region: content
-  field_mailing_list_id:
-    type: string
-    weight: 4
-    region: content
-    label: inline
+  field_newsletter_heading:
+    weight: 5
+    label: above
     settings:
       link_to_entity: false
     third_party_settings: {  }
-  field_shared_secret_key:
-    weight: 9
-    label: inline
-    settings: {  }
-    third_party_settings: {  }
-    type: salt_formatter_type
-    region: content
-  field_types_categories:
-    weight: 3
-    label: above
-    settings: {  }
-    third_party_settings: {  }
-    type: preferences_set_formatter
+    type: string
     region: content
   field_url_for_item_page:
     type: string
-    weight: 7
+    weight: 2
     region: content
-    label: inline
+    label: above
     settings:
       link_to_entity: false
     third_party_settings: {  }
-  links:
-    weight: 8
-    region: content
-    settings: {  }
-    third_party_settings: {  }
 hidden:
+  field_mailing_list_id: true
+  field_shared_secret_key: true
+  field_types_categories: true
   langcode: true
+  links: true
