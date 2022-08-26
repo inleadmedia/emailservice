@@ -1,0 +1,21 @@
+uuid: 7c621296-67b3-4ff7-b092-1c3eab4142ff
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_newsletter_heading
+    - node.type.subscription
+id: node.subscription.field_newsletter_heading
+field_name: field_newsletter_heading
+entity_type: node
+bundle: subscription
+label: 'Newsletter heading'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 'Nyt på hylderne'
+default_value_callback: ''
+settings: {  }
+field_type: string
