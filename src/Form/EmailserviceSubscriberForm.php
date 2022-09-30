@@ -24,6 +24,7 @@ class EmailserviceSubscriberForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $subscriber_info = NULL, Node $node = NULL) {
+    $labels = $this->config('emailservice.materialtypesmapping')->get('labels');
     $buttons_color = $node->get('field_buttons_color')->color;
 
     $form['#theme'] = 'emailservice_subscription_form';
@@ -94,7 +95,7 @@ class EmailserviceSubscriberForm extends FormBase {
         $form['preferences_wrapper']['categories']['category_' . $tid] = [
           '#type' => 'checkboxes',
           '#id' => 'preference_categories',
-          '#title' => $type_name,
+          '#title' => $labels[$term->id()]['custom'] ?? $type_name,
           '#options' => $category_options,
           '#default_value' => !empty($subscriber_info['categories']) ? $subscriber_info['categories'] : [],
         ];

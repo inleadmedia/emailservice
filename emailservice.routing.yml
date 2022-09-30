@@ -49,3 +49,13 @@ emailservice.check_subscriber:
     _title: 'Generate salt'
   requirements:
     _permission: 'access content'
+
+emailservice.material_types_mapping_form:
+  path: '/admin/config/emailservice/material-types-labels'
+  defaults:
+    _form: '\Drupal\emailservice\Form\MaterialTypesMappingForm'
+    _title: 'Material Types Labels Mapping Form'
+  requirements:
+    _permission: 'access administration pages'
+  options:
+    _admin_route: TRUE
