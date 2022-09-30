@@ -10,3 +10,9 @@ emailservice.lms_config_form:
   description: 'LMS configuration setting'
   parent: system.admin_config_system
   weight: 99
+emailservice.material_types_mapping_form:
+  title: 'Material Types Labels'
+  route_name: emailservice.material_types_mapping_form
+  description: 'A description for the menu entry'
+  parent: system.admin_config_system
+  weight: 99

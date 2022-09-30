@@ -2,6 +2,7 @@
 
 namespace Drupal\emailservice;
 
+use Drupal;
 use Drupal\Component\Serialization\Json;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -19,7 +20,7 @@ class PeytzmailConnect {
    * Constructs a new PeytzmailConnect object.
    */
   public function __construct() {
-    $config = \Drupal::config('emailservice.config');
+    $config = Drupal::config('emailservice.config');
     $this->config = $config;
     $api_url = $config->get('peytzmail_api_url');
     $this->request = new Client(['base_uri' => $api_url]);
@@ -83,7 +84,7 @@ class PeytzmailConnect {
       return JSON::decode($request->getBody()->getContents());
     }
     catch (ClientException $exception) {
-      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
 
@@ -113,7 +114,7 @@ class PeytzmailConnect {
       $result = JSON::decode($response->getBody()->getContents());
     }
     catch (ClientException $exception) {
-      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
       $exception_message = JSON::decode($exception->getResponse()->getBody()->getContents());
       $reason = explode(':', $exception_message['message']);
 
@@ -156,7 +157,7 @@ class PeytzmailConnect {
     }
     catch (ClientException $exception) {
       $result['exception_code'] = $exception->getCode();
-      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
 
 
@@ -194,7 +195,7 @@ class PeytzmailConnect {
         $this->request->put($uri, $options);
       }
       catch (ClientException $exception) {
-        \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+        Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
       }
     }
   }
@@ -222,7 +223,7 @@ class PeytzmailConnect {
       $request = $this->request->get($uri, $options);
     }
     catch (ClientException $exception) {
-      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
 
     $result = JSON::decode($request->getBody()->getContents());
@@ -255,8 +256,8 @@ class PeytzmailConnect {
       return $response->getBody()->getContents();
     }
     catch (ClientException $exception) {
-      \Drupal::messenger()->addError($exception->getMessage());
-      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      Drupal::messenger()->addError($exception->getMessage());
+      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
 
@@ -287,7 +288,38 @@ class PeytzmailConnect {
       return JSON::decode($response->getBody()->getContents());
     }
     catch (ClientException $exception) {
-      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+    }
+  }
+
+  /**
+   * Request subscribers for a mailinglist.
+   *
+   * @param string $mailinglist
+   *   Mailinglist ID.
+   *
+   * @return array
+   *   List of subscribers.
+   */
+  public function getMailinglistSubscribers(string $mailinglist) {
+    $api_token = $this->config->get('peytzmail_api_token');
+    $options = [
+      'auth' => [$api_token, NULL],
+      'headers' => [
+        'content-type' => 'application/json',
+        'Accept' => 'application/json',
+      ],
+    ];
+
+    $uri = '/api/v1/mailinglists/' . $mailinglist . '/subscribers.json';
+
+    try {
+      $response = $this->request->get($uri, $options);
+      $result = JSON::decode($response->getBody()->getContents());
+      return $result['subscribers'];
+    } catch (ClientException $exception) {
+      Drupal::logger('emailservice')
+        ->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
 

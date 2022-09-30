@@ -106,6 +106,15 @@ function emailservice_preprocess_subscription_manager(&$variables) {
  */
 function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   if ($form_id == 'taxonomy_term_types_materials_form') {
+    // Disable "name" field on term edit.
+    if (!is_null($form['tid']['#value'])) {
+      $form["name"]["#description_display"] = 'after';
+      $form['name']['widget'][0]['value']['#description'] = t("The editing of term name is not allowed. If you want to use customized label for this term please use the <a href='@custom-labels'>Material Items Label Mapping</a>", [
+        '@custom-labels' => '/admin/config/emailservice/material-types-labels',
+      ]);
+      $form['name']['#disabled'] = TRUE;
+    }
+
     foreach (array_keys($form['actions']) as $action) {
       if ($action != 'delete' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
         $form['actions']['submit']['#submit'][] = 'emailservice_type_terms_send';

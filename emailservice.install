@@ -172,3 +172,32 @@ function emailservice_update_8004() {
     $schema->changeField($field_table, 'field_types_categories_cql_query', 'field_types_categories_cql_query', $field_spec);
   }
 }
+
+/**
+ * Manipulate Bog term.
+ */
+function emailservice_update_8005(&$sandbox) {
+  // Update Boger (tid:58) to be Bog.
+  $term = \Drupal\taxonomy\Entity\Term::load(58);
+  $term->setName('Bog');
+  $term->save();
+
+  // Delete the old Bog (13) term.
+  $term = \Drupal\taxonomy\Entity\Term::load(13);
+  if ($term) {
+    $term->delete();
+  }
+
+  // Re-save all nodes.
+  $nodes = \Drupal::entityTypeManager()->getStorage('node')->loadByProperties(['type' => 'subscription']);
+  foreach ($nodes as $node) {
+    $typesCategories = $node->get('field_types_categories')->getValue();
+    foreach ($typesCategories as $key => $typeCategory) {
+      if ($typeCategory['material_tid'] == '13') {
+        $typesCategories[$key]['material_tid'] = '58';
+      }
+    }
+    $node->set('field_types_categories', $typesCategories);
+    $node->save();
+  }
+}
