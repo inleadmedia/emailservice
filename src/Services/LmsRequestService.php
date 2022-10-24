@@ -79,6 +79,7 @@ class LmsRequestService {
    * @return array
    */
   public function lmsRequest(string $nid, string $alias, $item_url) {
+    $pattern = "/{$alias}\B/";
     $categories = $this->connection->select('emailservice_preferences_mapping', 'epm');
     $categories->join('taxonomy_term__field_types_cql_query', 'q', 'epm.material_tid=q.entity_id');
     $categories->fields('epm', [
@@ -95,8 +96,20 @@ class LmsRequestService {
 
     $categories = $categories->execute()->fetchAll();
 
+    // @todo: Find out why query selecting by current entity_id includes results with machine_names of other clients.
+    // For example: Expecting only - bornbib-ung_XYZ, having: bornbib_XYZ also,
+    // result which relates other entity, but in db it's assigned to current node.
+
+    // Filter unrelated results from categories array.
+    $filteredCategories = [];
+    foreach ($categories as $categoryData) {
+      if (preg_match($pattern, $categoryData->machine_name) === 1) {
+        $filteredCategories[] = $categoryData;
+      }
+    }
+
     $results = [];
-    foreach ($categories as $category) {
+    foreach ($filteredCategories as $category) {
       $query = "/search?query=(($category->field_types_cql_query_value) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200&_source=emailservice";
       $uri = $this->lmsServiceURL . $alias . $query;
 
