@@ -11,7 +11,6 @@ use Drupal\emailservice\Models\Item;
 use GuzzleHttp\Client;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use function GuzzleHttp\Psr7\str;
 
 class LmsRequestService {
 
