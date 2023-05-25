@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @QueueWorker(
  *   id = "newsletter_build_and_send",
  *   title = @Translation("Request LMS and send data to Peytzmail to initiate sendout."),
- *   cron = {"time" = 360}
+ *   cron = {"time" = 60}
  * )
  */
 class NewsletterBuildAndSendQueue extends QueueWorkerBase implements ContainerFactoryPluginInterface {

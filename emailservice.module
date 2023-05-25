@@ -241,8 +241,22 @@ function emailservice_theme_registry_alter(&$theme_registry) {
  * Implements hook_cron().
  */
 function emailservice_cron() {
+  $last_cron_run = \Drupal::state()->get(
+    'emailservice_last_cron_run',
+    0
+  );
+  $now = \Drupal::time()->getRequestTime();
+  // One week.
+  $threshold = 60 * 60 * 24 * 7;
+  $is_monday = (int) (new \DateTime())->format('N') === 1;
+  if (($last_cron_run && (($now - $last_cron_run) < $threshold)) || !$is_monday) {
+    Drupal::logger('emailservice')
+      ->warning('Email service newsletter schedule already ran at ' . (new DateTime())->setTimestamp($last_cron_run)->format(DATE_ATOM) . '. And only will only run at Monday\'s.');
+    return;
+  }
+
   \Drupal::logger('emailservice')
-    ->notice('Email service request to Peytz Mail ran.');
+    ->notice('Email service newsletter schedule sendout commenced.');
 
   $nids = \Drupal::entityQuery('node')
     ->condition('type', 'subscription')
@@ -253,6 +267,7 @@ function emailservice_cron() {
   $queue_factory = \Drupal::service('queue');
   /** @var Drupal\Core\Queue\DatabaseQueue $queue */
   $queue = $queue_factory->get('newsletter_build_and_send');
+  $queue->deleteQueue();
 
   // Add subscription node id to queue.
   foreach ($nids as $nid) {
@@ -260,6 +275,11 @@ function emailservice_cron() {
     $item->nid = $nid;
     $queue->createItem($item);
   }
+
+  \Drupal::state()->set(
+    'emailservice_last_cron_run',
+    \Drupal::time()->getRequestTime()
+  );
 }
 
 /*
