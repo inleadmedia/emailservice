@@ -249,14 +249,24 @@ function emailservice_cron() {
   // One week.
   $threshold = 60 * 60 * 24 * 7;
   $is_monday = (int) (new \DateTime())->format('N') === 1;
-  if (($last_cron_run && (($now - $last_cron_run) < $threshold)) || !$is_monday) {
+
+  // Check if we're in debug/development mode.
+  $debug_mode = \Drupal::config('emailservice.config')->get('log_emails_to_watchdog');
+
+  // Skip time and day restrictions when in debug mode.
+  if (!$debug_mode && (($last_cron_run && (($now - $last_cron_run) < $threshold)) || !$is_monday)) {
     Drupal::logger('emailservice')
       ->warning('Email service newsletter schedule already ran at ' . (new DateTime())->setTimestamp($last_cron_run)->format(DATE_ATOM) . '. And only will only run at Monday\'s.');
     return;
   }
 
-  \Drupal::logger('emailservice')
-    ->notice('Email service newsletter schedule sendout commenced.');
+  if ($debug_mode) {
+    \Drupal::logger('emailservice')
+      ->notice('Email service newsletter schedule sendout commenced (debug mode - bypassing time/day restrictions).');
+  } else {
+    \Drupal::logger('emailservice')
+      ->notice('Email service newsletter schedule sendout commenced.');
+  }
 
   $nids = \Drupal::entityQuery('node')
     ->condition('type', 'subscription')
