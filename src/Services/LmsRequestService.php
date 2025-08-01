@@ -172,10 +172,6 @@ class LmsRequestService {
         $potentialCoverUrl = rtrim($this->coversServiceURL, '/') . '/' . $alias . '/covers/' . $object['faustNumber'] . '?size=210&crop=210x315';
 
         // Check if cover exists with HEAD request.
-        $this->emailserviceLogger->log(LogLevel::DEBUG, $this->t("Loading cover @coverUrl", [
-          "@coverUrl" => $potentialCoverUrl,
-        ]));
-
         try {
           $headRequest = $this->client->head($potentialCoverUrl, ['timeout' => 5]);
 

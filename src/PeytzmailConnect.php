@@ -394,10 +394,10 @@ class PeytzmailConnect {
       'timestamp' => date('Y-m-d H:i:s'),
     ];
 
-    Drupal::logger('emailservice')->info('Email logged instead of sent - Mailinglist: @mailinglist, Subject: @subject, Content: @content', [
+    Drupal::logger('emailservice')->info('Email logged instead of sent - Mailinglist: @mailinglist, Subject: @subject, Content:<pre>@content</pre>', [
       '@mailinglist' => $mailinglist,
       '@subject' => $feed->subject ?? 'No subject',
-      '@content' => json_encode($feed),
+      '@content' => json_encode($feed, JSON_PRETTY_PRINT),
     ]);
 
     // Show a message to the user that the email was logged instead of sent.
