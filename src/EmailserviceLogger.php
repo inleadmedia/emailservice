@@ -35,7 +35,7 @@ class EmailserviceLogger {
    * @param array $context
    */
   public function log($level, $message, array $context = []) {
-    if ($context['uid']) {
+    if (isset($context['uid'])) {
       $this->loggerFactory->setCurrentUser(User::load($context['uid']));
     }
     $this->loggerFactory->log($level, $message, $context);

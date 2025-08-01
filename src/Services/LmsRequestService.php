@@ -12,6 +12,9 @@ use GuzzleHttp\Client;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ *
+ */
 class LmsRequestService {
 
   use StringTranslationTrait;
@@ -46,6 +49,9 @@ class LmsRequestService {
    */
   private $coversServiceURL;
 
+  /**
+   *
+   */
   public function __construct(ConfigFactory $config, EmailserviceLogger $emailserviceLogger, Connection $connection, Client $client) {
     $this->config = $config;
     $this->emailserviceLogger = $emailserviceLogger;
@@ -57,6 +63,9 @@ class LmsRequestService {
     $this->coversServiceURL = $lmsConfig->get('lms_covers_api_url');
   }
 
+  /**
+   *
+   */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
@@ -83,10 +92,10 @@ class LmsRequestService {
     $categories = $this->connection->select('emailservice_preferences_mapping', 'epm');
     $categories->join('taxonomy_term__field_types_cql_query', 'q', 'epm.material_tid=q.entity_id');
     $categories->fields('epm', [
-        'cql_query',
-        'label',
-        'machine_name',
-      ])
+      'cql_query',
+      'label',
+      'machine_name',
+    ])
       ->fields('q', ['field_types_cql_query_value'])
       ->condition('epm.entity_id', $nid)
       ->condition('epm.preference_type', 'field_types_categories')
@@ -96,10 +105,9 @@ class LmsRequestService {
 
     $categories = $categories->execute()->fetchAll();
 
-    // @todo: Find out why query selecting by current entity_id includes results with machine_names of other clients.
+    // @todo Find out why query selecting by current entity_id includes results with machine_names of other clients.
     // For example: Expecting only - bornbib-ung_XYZ, having: bornbib_XYZ also,
     // result which relates other entity, but in db it's assigned to current node.
-
     // Filter unrelated results from categories array.
     $filteredCategories = [];
     foreach ($categories as $categoryData) {
@@ -116,7 +124,8 @@ class LmsRequestService {
       try {
         $request = $this->client->get($uri);
         $content = $request->getBody()->getContents();
-      } catch (\Exception $e) {
+      }
+      catch (\Exception $e) {
         $this->emailserviceLogger->log(LogLevel::ERROR, $this->t("@message", ["@message" => $e->getMessage()]));
         $content = '';
       }
@@ -157,6 +166,26 @@ class LmsRequestService {
       }
       if (isset($object['cover'])) {
         $result_item->setCover($this->coversServiceURL . $alias . $object['cover'] . '?size=210&crop=210x315');
+      }
+      elseif (isset($object['faustNumber'])) {
+        // Try to construct cover URL from faustNumber when cover field is missing.
+        $potentialCoverUrl = rtrim($this->coversServiceURL, '/') . '/' . $alias . '/covers/' . $object['faustNumber'] . '?size=210&crop=210x315';
+
+        // Check if cover exists with HEAD request.
+        try {
+          $headRequest = $this->client->head($potentialCoverUrl, ['timeout' => 5]);
+
+          if ($headRequest->getStatusCode() === 200) {
+            $result_item->setCover($potentialCoverUrl);
+          }
+        }
+        catch (\Exception $e) {
+          // Cover doesn't exist or request failed, continue without cover.
+          $this->emailserviceLogger->log(LogLevel::DEBUG, $this->t("Cover not found for faustNumber @faust: @message", [
+            "@faust" => $object['faustNumber'],
+            "@message" => $e->getMessage(),
+          ]));
+        }
       }
       $result_item->setTypeKey($object['type']);
       $result_item->setSubjectKey($object['category']->machine_name);

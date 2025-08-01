@@ -57,6 +57,18 @@ class EmailserviceConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $form['development_settings'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Development Settings'),
+    ];
+
+    $form['development_settings']['log_emails_to_watchdog'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Log emails to watchdog instead of sending'),
+      '#description' => $this->t('When enabled, emails will be logged to the Drupal watchdog instead of being sent via the email service. This is useful for development and testing.'),
+      '#default_value' => $config->get('log_emails_to_watchdog') ?: FALSE,
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -70,6 +82,7 @@ class EmailserviceConfigForm extends ConfigFormBase {
       ->set('peytzmail_api_url', $form_state->getValue('peytzmail_api_url'))
       ->set('peytzmail_api_user', $form_state->getValue('peytzmail_api_user'))
       ->set('peytzmail_api_token', $form_state->getValue('peytzmail_api_token'))
+      ->set('log_emails_to_watchdog', $form_state->getValue('log_emails_to_watchdog'))
       ->save();
   }
 
