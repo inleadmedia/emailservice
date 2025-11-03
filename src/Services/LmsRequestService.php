@@ -118,7 +118,7 @@ class LmsRequestService {
 
     $results = [];
     foreach ($filteredCategories as $category) {
-      $query = "/search?query=(($category->field_types_cql_query_value) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=10&_source=emailservice";
+      $query = "/search?query=(($category->field_types_cql_query_value) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=9&_source=emailservice";
       $uri = $this->lmsServiceURL . $alias . $query;
 
       try {
