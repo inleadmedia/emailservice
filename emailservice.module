@@ -5,6 +5,11 @@
  * Emailservice module functionality.
  */
 
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\node\NodeInterface;
+use Drupal\Core\Render\Element\StatusMessages;
+use Drupal\file\Entity\File;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultForbidden;
@@ -14,7 +19,6 @@ use Drupal\Core\Path\AliasStorage;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ViewExecutable;
-use Drupal\emailservice\Controller\SubscriptionManagerController;
 
 /**
  * Implements hook_theme().
@@ -57,7 +61,7 @@ function emailservice_preprocess_subscription_manager(&$variables) {
 
     // Process logo output.
     $logo_array = $node->get('field_logo')->target_id;
-    $file = \Drupal\file\Entity\File::load($logo_array);
+    $file = File::load($logo_array);
     $logo = [
       '#theme' => 'image_style',
       '#style_name' => 'medium',
@@ -93,7 +97,7 @@ function emailservice_preprocess_subscription_manager(&$variables) {
 
     $variables['headline_color'] = $node->get('field_headline_color')->color;
 
-    $messages = \Drupal\Core\Render\Element\StatusMessages::renderMessages();
+    $messages = StatusMessages::renderMessages();
     if (!empty($messages)) {
       $messages['#theme'] = 'emailservice_status_messages';
       $variables['messages'] = \Drupal::service('renderer')->render($messages);
@@ -134,12 +138,18 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
       $alias = $entity->getOwner()->get('field_alias')->value;
     }
 
+    // Hide materials count field for non-administrators.
+    $form['field_materials_count']['#access'] = in_array('administrator', \Drupal::currentUser()->getRoles());
+
     $form_state->setFormState([
       'municipality_alias' => $alias,
     ]);
   }
 }
 
+/**
+ *
+ */
 function emailservice_type_terms_send(&$form, FormStateInterface $formState) {
   $connect = new PeytzmailConnect();
   $remote_field_data = $connect->getSubscriberFieldsData('new_arrivals_types');
@@ -186,7 +196,7 @@ function emailservice_views_query_alter(ViewExecutable $view, QueryPluginBase $q
 /**
  * Implements hook_node_access().
  */
-function emailservice_node_access(\Drupal\node\NodeInterface $node, $op, \Drupal\Core\Session\AccountInterface $account) {
+function emailservice_node_access(NodeInterface $node, $op, AccountInterface $account) {
   switch ($op) {
     case 'view':
     case 'update':
@@ -203,7 +213,8 @@ function emailservice_node_access(\Drupal\node\NodeInterface $node, $op, \Drupal
       $access = new AccessResultForbidden();
       $access->addCacheableDependency($node);
       return $access;
-      break;
+
+    break;
   }
 }
 
@@ -263,7 +274,8 @@ function emailservice_cron() {
   if ($debug_mode) {
     \Drupal::logger('emailservice')
       ->notice('Email service newsletter schedule sendout commenced (debug mode - bypassing time/day restrictions).');
-  } else {
+  }
+  else {
     \Drupal::logger('emailservice')
       ->notice('Email service newsletter schedule sendout commenced.');
   }
@@ -292,7 +304,7 @@ function emailservice_cron() {
   );
 }
 
-/*
+/**
  * Implements hook_ENTITY_TYPE_insert().
  *
  * Create node's path alias.
@@ -301,7 +313,7 @@ function emailservice_cron() {
  *
  * @throws \Exception
  */
-function emailservice_node_insert(Drupal\Core\Entity\EntityInterface $entity) {
+function emailservice_node_insert(EntityInterface $entity) {
   if ($entity->getType() == 'subscription') {
     $alias_storage = new AliasStorage(Drupal::database(), \Drupal::moduleHandler());
     $author_alias = $entity->getOwner()->field_alias->value;
@@ -320,7 +332,7 @@ function emailservice_node_insert(Drupal\Core\Entity\EntityInterface $entity) {
  *
  * @param \Drupal\Core\Entity\EntityInterface $entity
  */
-function emailservice_node_delete(Drupal\Core\Entity\EntityInterface $entity) {
+function emailservice_node_delete(EntityInterface $entity) {
   if ($entity->getType() == 'subscription') {
     $alias_storage = new AliasStorage(Drupal::database(), \Drupal::moduleHandler());
     $author_alias = $entity->getOwner()->field_alias->value;
@@ -334,12 +346,12 @@ function emailservice_node_delete(Drupal\Core\Entity\EntityInterface $entity) {
 function emailservice_preprocess_input(&$variables) {
   if (isset($variables['attributes']['class'])) {
     if (is_object($variables['attributes']['class'])) {
-      if ( in_array( 'error', $variables['attributes']['class']->value() ) ) {
+      if (in_array('error', $variables['attributes']['class']->value())) {
         $variables['attributes']['class']->addClass('is-invalid');
       }
     }
     elseif (is_array($variables['attributes']['class'])) {
-      if ( in_array( 'error', $variables['attributes']['class'] ) ) {
+      if (in_array('error', $variables['attributes']['class'])) {
         $variables['attributes']['class'][] = 'is-invalid';
       }
     }
@@ -368,6 +380,20 @@ function emailservice_preprocess(&$variables, $hook) {
       if (count($variables['element']['#options']) > 20) {
         $variables['attributes']['class'][] = 'es-card-columns';
       }
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function emailservice_menu_local_tasks_alter(&$data, $route_name) {
+  // Only show "Send Newsletter" task link on subscription content type nodes.
+  if (isset($data['tabs'][0]['emailservice.send_newsletter'])) {
+    $node = \Drupal::routeMatch()->getParameter('node');
+
+    if (!$node instanceof NodeInterface || $node->bundle() !== 'subscription') {
+      unset($data['tabs'][0]['emailservice.send_newsletter']);
     }
   }
 }

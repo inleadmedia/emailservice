@@ -1,0 +1,6 @@
+emailservice.send_newsletter:
+  route_name: emailservice.send_newsletter_form
+  title: 'Send Newsletter'
+  base_route: entity.node.canonical
+  weight: 100
+

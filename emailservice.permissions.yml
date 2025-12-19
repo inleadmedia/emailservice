@@ -1,0 +1,4 @@
+trigger manual newsletter:
+  title: 'Trigger manual newsletter'
+  description: 'Allows users to manually trigger newsletter sending for subscriptions.'
+
