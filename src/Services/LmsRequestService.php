@@ -20,6 +20,12 @@ class LmsRequestService {
 
   use StringTranslationTrait;
 
+
+  /**
+   * Default material count.
+   */
+  const MATERIAL_COUNT_DEFAULT = 9;
+
   /**
    * @var \Drupal\Core\Config\ConfigFactory
    */
@@ -103,10 +109,13 @@ class LmsRequestService {
    *   Library user alias.
    * @param string $item_url
    *   Library material item URL.
+   * @param int $limit
+   *   Limit of materials to return.
    *
    * @return array
+   *   Array of results.
    */
-  public function lmsRequest(string $nid, string $alias, $item_url, $limit = 9) {
+  public function lmsRequest(string $nid, string $alias, $item_url, $limit = self::MATERIAL_COUNT_DEFAULT) {
     $pattern = "/{$alias}\B/";
     $categories = $this->connection->select('emailservice_preferences_mapping', 'epm');
     $categories->join('taxonomy_term__field_types_cql_query', 'q', 'epm.material_tid=q.entity_id');

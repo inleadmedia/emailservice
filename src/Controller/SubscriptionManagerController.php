@@ -24,11 +24,6 @@ use Symfony\Component\HttpFoundation\Response;
 class SubscriptionManagerController extends ControllerBase {
 
 
-  /**
-   * Default material count.
-   */
-  const MATERIAL_COUNT_DEFAULT = 9;
-
   private $newsletter;
 
   /**
@@ -132,7 +127,7 @@ class SubscriptionManagerController extends ControllerBase {
 
       $limit = $this->node->get('field_materials_count')->value;
       if (empty($limit)) {
-        $limit = self::MATERIAL_COUNT_DEFAULT;
+        $limit = LmsRequestService::MATERIAL_COUNT_DEFAULT;
       }
 
       $this->newsletter = $this->lms->lmsRequest($nid, $alias, $itemUrl, $limit);

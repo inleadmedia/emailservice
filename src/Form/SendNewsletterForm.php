@@ -6,6 +6,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\emailservice\Controller\SubscriptionManagerController;
+use Drupal\emailservice\Services\LmsRequestService;
 use Drupal\node\NodeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -48,9 +49,9 @@ class SendNewsletterForm extends FormBase {
       '</div>',
     ];
 
-    $materials_count = $node->get('field_materials_count')->value;
-    if (empty($materials_count)) {
-      $materials_count = SubscriptionManagerController::MATERIAL_COUNT_DEFAULT;
+    $materials_count = LmsRequestService::MATERIAL_COUNT_DEFAULT;
+    if ($node->hasField('field_materials_count')) {
+      $materials_count = $node->get('field_materials_count')->value;
     }
 
     $form['items'] = [
@@ -60,7 +61,7 @@ class SendNewsletterForm extends FormBase {
         $this->t('Node ID: @nid', ['@nid' => $node->id()]),
         $this->t('Owner: @owner', ['@owner' => $node->getOwner()->getDisplayName()]),
         $this->t('Mailing List ID: @list', ['@list' => $node->get('field_mailing_list_id')->getString()]),
-        $this->t('Materials Count: @count', ['@count' => $node->get('field_materials_count')->value]),
+        $this->t('Materials Count: @count', ['@count' => $materials_count]),
       ],
     ];
 
