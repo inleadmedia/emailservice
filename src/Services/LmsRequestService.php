@@ -5,6 +5,7 @@ namespace Drupal\emailservice\Services;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\emailservice\EmailserviceLogger;
 use Drupal\emailservice\Models\Item;
@@ -18,6 +19,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class LmsRequestService {
 
   use StringTranslationTrait;
+
+
+  /**
+   * Default material count.
+   */
+  const MATERIAL_COUNT_DEFAULT = 9;
 
   /**
    * @var \Drupal\Core\Config\ConfigFactory
@@ -50,13 +57,30 @@ class LmsRequestService {
   private $coversServiceURL;
 
   /**
-   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  public function __construct(ConfigFactory $config, EmailserviceLogger $emailserviceLogger, Connection $connection, Client $client) {
+  private $entityTypeManager;
+
+  /**
+   * Constructor for LmsRequestService.
+   *
+   * @param \Drupal\Core\Config\ConfigFactory $config
+   *   Config factory service.
+   * @param \Drupal\emailservice\EmailserviceLogger $emailserviceLogger
+   *   Emailservice logger service.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   Database connection service.
+   * @param \GuzzleHttp\Client $client
+   *   HTTP client service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   Entity type manager service.
+   */
+  public function __construct(ConfigFactory $config, EmailserviceLogger $emailserviceLogger, Connection $connection, Client $client, EntityTypeManagerInterface $entityTypeManager) {
     $this->config = $config;
     $this->emailserviceLogger = $emailserviceLogger;
     $this->connection = $connection;
     $this->client = $client;
+    $this->entityTypeManager = $entityTypeManager;
 
     $lmsConfig = $this->config->get('lms.config');
     $this->lmsServiceURL = $lmsConfig->get('lms_api_url');
@@ -71,7 +95,8 @@ class LmsRequestService {
       $container->get('config.factory'),
       $container->get('emailservice.logger'),
       $container->get('database'),
-      $container->get('http_client')
+      $container->get('http_client'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -84,10 +109,13 @@ class LmsRequestService {
    *   Library user alias.
    * @param string $item_url
    *   Library material item URL.
+   * @param int $limit
+   *   Limit of materials to return.
    *
    * @return array
+   *   Array of results.
    */
-  public function lmsRequest(string $nid, string $alias, $item_url) {
+  public function lmsRequest(string $nid, string $alias, $item_url, $limit = self::MATERIAL_COUNT_DEFAULT) {
     $pattern = "/{$alias}\B/";
     $categories = $this->connection->select('emailservice_preferences_mapping', 'epm');
     $categories->join('taxonomy_term__field_types_cql_query', 'q', 'epm.material_tid=q.entity_id');
@@ -118,7 +146,7 @@ class LmsRequestService {
 
     $results = [];
     foreach ($filteredCategories as $category) {
-      $query = "/search?query=(($category->field_types_cql_query_value) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200&_source=emailservice";
+      $query = "/search?query=(($category->field_types_cql_query_value) AND ($category->cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=" . $limit . "&_source=emailservice";
       $uri = $this->lmsServiceURL . $alias . $query;
 
       try {

@@ -7,4 +7,4 @@ services:
     arguments: ['@logger.factory']
   emailservice.lms:
     class: Drupal\emailservice\Services\LmsRequestService
-    arguments: ['@config.factory', '@emailservice.logger', '@database', '@http_client']
+    arguments: ['@config.factory', '@emailservice.logger', '@database', '@http_client', '@entity_type.manager']
