@@ -8,6 +8,9 @@ use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
+use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Render\RendererInterface;
+use Drupal\emailservice\EmailserviceLogger;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\emailservice\Services\LmsRequestService;
 use Drupal\node\Entity\Node;
@@ -16,39 +19,102 @@ use Egulias\EmailValidator\Validation\RFCValidation;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Class SubscriptionManagerController.
+ * Subscription manager controller.
  */
 class SubscriptionManagerController extends ControllerBase {
 
 
+  /**
+   * The newsletter object.
+   *
+   * @var object
+   */
   private $newsletter;
 
   /**
+   * The LMS request service.
+   *
    * @var \Drupal\emailservice\Services\LmsRequestService
    */
   protected $lms;
 
   /**
+   * The node object.
+   *
    * @var \Drupal\node\Entity\Node
    */
   protected $node;
 
   /**
+   * The email service logger.
    *
+   * @var \Drupal\emailservice\EmailserviceLogger
    */
-  public function __construct(LmsRequestService $lms) {
+  protected $emailserviceLogger;
+
+  /**
+   * The renderer service.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
+   * The mail manager.
+   *
+   * @var \Drupal\Core\Mail\MailManagerInterface
+   */
+  protected $mailManager;
+
+  /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
+   * SubscriptionManagerController constructor.
+   *
+   * @param \Drupal\emailservice\Services\LmsRequestService $lms
+   *   The LMS request service.
+   * @param \Drupal\emailservice\EmailserviceLogger $emailservice_logger
+   *   The emailservice logger.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer service.
+   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
+   *   The mail manager.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
+   */
+  public function __construct(
+    LmsRequestService $lms,
+    EmailserviceLogger $emailservice_logger,
+    RendererInterface $renderer,
+    MailManagerInterface $mail_manager,
+    RequestStack $request_stack,
+  ) {
     $this->lms = $lms;
+    $this->emailserviceLogger = $emailservice_logger;
+    $this->renderer = $renderer;
+    $this->mailManager = $mail_manager;
+    $this->requestStack = $request_stack;
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('emailservice.lms')
+      $container->get('emailservice.lms'),
+      $container->get('emailservice.logger'),
+      $container->get('renderer'),
+      $container->get('plugin.manager.mail'),
+      $container->get('request_stack')
     );
   }
 
@@ -150,21 +216,20 @@ class SubscriptionManagerController extends ControllerBase {
         ]);
 
         // Send mail to site admin.
-        $mailManager = \Drupal::service('plugin.manager.mail');
         $key = 'lms_request_notify_on_empty';
-        $to = \Drupal::config('system.site')->get('mail');
+        $to = $this->config('system.site')->get('mail');
         $params['message'] = $content;
-        $mailManager->mail('emailservice', $key, $to, NULL, $params, NULL);
+        $this->mailManager->mail('emailservice', $key, $to, NULL, $params, NULL);
 
         // Log detailed warning into dblog.
         $context['uid'] = (int) $owner->id();
-        \Drupal::service('emailservice.logger')->log(LogLevel::WARNING, $content, $context);
+        $this->emailserviceLogger->log(LogLevel::WARNING, $content, $context);
       }
     }
     catch (\Exception $exception) {
-      \Drupal::logger('emailservice')
+      $this->getLogger('emailservice')
         ->error($exception->getMessage());
-      \Drupal::messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
+      $this->messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
     }
 
     return [
@@ -185,7 +250,7 @@ class SubscriptionManagerController extends ControllerBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   private function checkMunicipalityParam($param) {
-    $users = \Drupal::entityTypeManager()
+    $users = $this->entityTypeManager()
       ->getStorage('user')
       ->loadByProperties([
         'field_alias' => $param,
@@ -209,8 +274,9 @@ class SubscriptionManagerController extends ControllerBase {
     $email_parameter = '';
     $cs_parameter = '';
 
-    $municipality = \Drupal::request()->get('municipality');
-    $params = \Drupal::request()->query->all();
+    $request = $this->requestStack->getCurrentRequest();
+    $municipality = $request->get('municipality');
+    $params = $request->query->all();
     $params['municipality'] = $municipality;
     if (!empty($params['email'])) {
       $email_parameter = $params['email'];
@@ -235,7 +301,9 @@ class SubscriptionManagerController extends ControllerBase {
       $valid_user = $this->checkMunicipalityParam($params['municipality']);
     }
     if (!empty($valid_user)) {
-      $nids = Drupal::entityQuery('node')
+      $nids = $this->entityTypeManager()
+        ->getStorage('node')
+        ->getQuery()
         ->accessCheck(FALSE)
         ->condition('status', 1)
         ->condition('uid', $valid_user->id())
@@ -284,9 +352,9 @@ class SubscriptionManagerController extends ControllerBase {
           }
         }
 
-        $form = \Drupal::formBuilder()
+        $form = $this->formBuilder()
           ->getForm('\Drupal\emailservice\Form\EmailserviceSubscriberForm', $return['#subscriber_info'], $node);
-        $form = \Drupal::service('renderer')->renderRoot($form);
+        $form = $this->renderer->renderRoot($form);
         $return['#form'] = $form;
 
         $return += [
@@ -295,7 +363,7 @@ class SubscriptionManagerController extends ControllerBase {
         ];
       }
     }
-    $rendered = Drupal::service('renderer')->render($return);
+    $rendered = $this->renderer->render($return);
     return new Response($rendered);
   }
 
@@ -313,14 +381,14 @@ class SubscriptionManagerController extends ControllerBase {
 
     $values = ['type' => 'subscription'];
 
-    $node = \Drupal::entityTypeManager()
+    $node = $this->entityTypeManager()
       ->getStorage('node')
       ->create($values);
 
-    $form = \Drupal::entityTypeManager()
+    $form = $this->entityTypeManager()
       ->getFormObject('node', 'default')
       ->setEntity($node);
-    $form = \Drupal::formBuilder()->getForm($form);
+    $form = $this->formBuilder()->getForm($form);
 
     $value = bin2hex(random_bytes(24));
     $element = $form["field_shared_secret_key"];
@@ -334,11 +402,12 @@ class SubscriptionManagerController extends ControllerBase {
   /**
    * Check if subscriber is already subscribed.
    */
-  public static function checkSubscriber() {
+  public function checkSubscriber() {
     $response = NULL;
     $existing = FALSE;
-    $possible_email = \Drupal::request()->get('email');
-    $mailinglist = \Drupal::request()->get('mailinglist');
+    $request = $this->requestStack->getCurrentRequest();
+    $possible_email = $request->get('email');
+    $mailinglist = $request->get('mailinglist');
 
     $valid = FALSE;
 
@@ -395,6 +464,7 @@ class SubscriptionManagerController extends ControllerBase {
    * Build newsletter message header.
    *
    * @return string
+   *   The newsletter title with week number.
    */
   public function buildTitle() {
     $week = new DrupalDateTime();

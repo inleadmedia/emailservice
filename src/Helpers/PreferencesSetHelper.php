@@ -5,6 +5,9 @@ namespace Drupal\emailservice\Helpers;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\user\Entity\User;
 
+/**
+ *
+ */
 class PreferencesSetHelper {
 
   /**
@@ -47,4 +50,5 @@ class PreferencesSetHelper {
     $term_name = mb_strtolower($term, 'UTF-8');
     return preg_replace('@[^a-zæøå0-9-]+@', '-', strtolower($term_name));
   }
+
 }

@@ -2,7 +2,6 @@
 
 namespace Drupal\emailservice;
 
-use Drupal;
 use Drupal\Component\Serialization\Json;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -20,7 +19,7 @@ class PeytzmailConnect {
    * Constructs a new PeytzmailConnect object.
    */
   public function __construct() {
-    $config = Drupal::config('emailservice.config');
+    $config = \Drupal::config('emailservice.config');
     $this->config = $config;
     $api_url = $config->get('peytzmail_api_url');
     $this->request = new Client(['base_uri' => $api_url]);
@@ -84,7 +83,7 @@ class PeytzmailConnect {
       return JSON::decode($request->getBody()->getContents());
     }
     catch (ClientException $exception) {
-      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
 
@@ -122,7 +121,7 @@ class PeytzmailConnect {
       $result = JSON::decode($response->getBody()->getContents());
     }
     catch (ClientException $exception) {
-      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
       $exception_message = JSON::decode($exception->getResponse()->getBody()->getContents());
       $reason = explode(':', $exception_message['message']);
 
@@ -165,9 +164,8 @@ class PeytzmailConnect {
     }
     catch (ClientException $exception) {
       $result['exception_code'] = $exception->getCode();
-      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
-
 
     return $result;
   }
@@ -203,7 +201,7 @@ class PeytzmailConnect {
         $this->request->put($uri, $options);
       }
       catch (ClientException $exception) {
-        Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+        \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
       }
     }
   }
@@ -231,7 +229,7 @@ class PeytzmailConnect {
       $request = $this->request->get($uri, $options);
     }
     catch (ClientException $exception) {
-      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
 
     $result = JSON::decode($request->getBody()->getContents());
@@ -272,8 +270,8 @@ class PeytzmailConnect {
       return $response->getBody()->getContents();
     }
     catch (ClientException $exception) {
-      Drupal::messenger()->addError($exception->getMessage());
-      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      \Drupal::messenger()->addError($exception->getMessage());
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
 
@@ -312,7 +310,7 @@ class PeytzmailConnect {
       return JSON::decode($response->getBody()->getContents());
     }
     catch (ClientException $exception) {
-      Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
+      \Drupal::logger('emailservice')->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
 
@@ -341,8 +339,9 @@ class PeytzmailConnect {
       $response = $this->request->get($uri, $options);
       $result = JSON::decode($response->getBody()->getContents());
       return $result['subscribers'];
-    } catch (ClientException $exception) {
-      Drupal::logger('emailservice')
+    }
+    catch (ClientException $exception) {
+      \Drupal::logger('emailservice')
         ->error($exception->getMessage() . ': ' . $exception->getCode());
     }
   }
@@ -357,13 +356,13 @@ class PeytzmailConnect {
    *   Mock response indicating the signup was logged.
    */
   private function logSignupToWatchdog(array $data) {
-    Drupal::logger('emailservice')->info('Signup logged instead of performed - Email: @email, Data: @data', [
+    \Drupal::logger('emailservice')->info('Signup logged instead of performed - Email: @email, Data: @data', [
       '@email' => $data['email'] ?? 'No email provided',
       '@data' => json_encode($data),
     ]);
 
     // Show a message to the user that the signup was logged instead of performed.
-    Drupal::messenger()->addStatus('Signup action was logged to watchdog instead of being performed (development mode).');
+    \Drupal::messenger()->addStatus('Signup action was logged to watchdog instead of being performed (development mode).');
 
     // Return a mock response similar to what the API would return.
     return [
@@ -394,14 +393,14 @@ class PeytzmailConnect {
       'timestamp' => date('Y-m-d H:i:s'),
     ];
 
-    Drupal::logger('emailservice')->info('Email logged instead of sent - Mailinglist: @mailinglist, Subject: @subject, Content:<pre>@content</pre>', [
+    \Drupal::logger('emailservice')->info('Email logged instead of sent - Mailinglist: @mailinglist, Subject: @subject, Content:<pre>@content</pre>', [
       '@mailinglist' => $mailinglist,
       '@subject' => $feed->subject ?? 'No subject',
       '@content' => json_encode($feed, JSON_PRETTY_PRINT),
     ]);
 
     // Show a message to the user that the email was logged instead of sent.
-    Drupal::messenger()->addStatus('Email was logged to watchdog instead of being sent (development mode).');
+    \Drupal::messenger()->addStatus('Email was logged to watchdog instead of being sent (development mode).');
 
     // Return a mock response similar to what the API would return.
     return json_encode([
@@ -425,14 +424,14 @@ class PeytzmailConnect {
    *   Mock response indicating the unsubscribe was logged.
    */
   private function logUnsubscribeToWatchdog($mailinglist_id, $subscriber_id, $alias) {
-    Drupal::logger('emailservice')->info('Unsubscribe logged instead of performed - Mailinglist: @mailinglist_id, Subscriber: @subscriber_id, Alias: @alias', [
+    \Drupal::logger('emailservice')->info('Unsubscribe logged instead of performed - Mailinglist: @mailinglist_id, Subscriber: @subscriber_id, Alias: @alias', [
       '@mailinglist_id' => $mailinglist_id,
       '@subscriber_id' => $subscriber_id,
       '@alias' => $alias,
     ]);
 
     // Show a message to the user that the unsubscribe was logged instead of performed.
-    Drupal::messenger()->addStatus('Unsubscribe action was logged to watchdog instead of being performed (development mode).');
+    \Drupal::messenger()->addStatus('Unsubscribe action was logged to watchdog instead of being performed (development mode).');
 
     // Return a mock response similar to what the API would return.
     return [

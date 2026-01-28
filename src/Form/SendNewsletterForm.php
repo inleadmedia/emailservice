@@ -5,7 +5,6 @@ namespace Drupal\emailservice\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\emailservice\Controller\SubscriptionManagerController;
 use Drupal\emailservice\Services\LmsRequestService;
 use Drupal\node\NodeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -32,7 +31,7 @@ class SendNewsletterForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, NodeInterface $node = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?NodeInterface $node = NULL) {
     if (!$node || $node->bundle() !== 'subscription') {
       $this->messenger()->addError($this->t('Invalid subscription node.'));
       return $form;

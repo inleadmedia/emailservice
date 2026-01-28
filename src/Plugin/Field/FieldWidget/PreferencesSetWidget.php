@@ -2,12 +2,10 @@
 
 namespace Drupal\emailservice\Plugin\Field\FieldWidget;
 
-use Drupal;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\taxonomy\Entity\Term;
-use Exception;
 use GuzzleHttp\Client;
 
 /**
@@ -60,18 +58,18 @@ class PreferencesSetWidget extends WidgetBase {
     $element['label'] = [
       '#type' => 'textfield',
       '#title' => t('Label'),
-      '#default_value' => isset($item->label) ? $item->label : NULL,
+      '#default_value' => $item->label ?? NULL,
     ];
 
     $element['machine_name'] = [
       '#type' => 'hidden',
-      '#value' => isset($item->machine_name) ? $item->machine_name : 'stub',
+      '#value' => $item->machine_name ?? 'stub',
     ];
 
     $element['cql_query'] = [
       '#type' => 'textarea',
       '#title' => t('CQL Query'),
-      '#default_value' => isset($item->cql_query) ? $item->cql_query : NULL,
+      '#default_value' => $item->cql_query ?? NULL,
       '#element_validate' => [
         [static::class, 'validate'],
       ],
@@ -79,12 +77,12 @@ class PreferencesSetWidget extends WidgetBase {
 
     $element['status'] = [
       '#type' => 'hidden',
-      '#default_value' => isset($item->status) ? $item->status : 1,
+      '#default_value' => $item->status ?? 1,
     ];
 
     $options = [];
     $vid = 'types_materials';
-    $terms = Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid);
+    $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid);
     foreach ($terms as $term) {
       $options[$term->tid] = $term->name;
     }
@@ -94,29 +92,29 @@ class PreferencesSetWidget extends WidgetBase {
       '#title' => t('Related material type'),
       '#empty_option' => t('Choose type'),
       '#options' => $options,
-      '#default_value' => isset($item->material_tid) ? $item->material_tid : '',
+      '#default_value' => $item->material_tid ?? '',
     ];
 
     return $element;
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public static function validate($element, FormStateInterface $form_state) {
     $cql_query = $element['#value'];
     $alias = $form_state->get('municipality_alias');
 
     if (!empty($cql_query)) {
-      $cache = Drupal::cache()->get('cql_validate.' . sha1($cql_query));
+      $cache = \Drupal::cache()->get('cql_validate.' . sha1($cql_query));
       if (!empty($cache) && $cache->valid == TRUE) {
         return;
       }
 
-      $url = Drupal::config('emailservice.lms')->get('lms_api_url');
+      $url = \Drupal::config('emailservice.lms')->get('lms_api_url');
 
       $delta = $element['#parents'][1];
-      $categories_field= $form_state->getValue('field_types_categories');
+      $categories_field = $form_state->getValue('field_types_categories');
       $material_tid = $categories_field[$delta]['material_tid'];
       $type = Term::load($material_tid)->get('field_types_cql_query')->value;
 
@@ -125,12 +123,13 @@ class PreferencesSetWidget extends WidgetBase {
       try {
         $request = new Client();
         $request->get($uri);
-        Drupal::cache()->set('cql_validate.' . sha1($cql_query), 'valid');
+        \Drupal::cache()->set('cql_validate.' . sha1($cql_query), 'valid');
       }
-      catch (Exception $e) {
+      catch (\Exception $e) {
         $form_state->setError($element, t('There are errors in search string. Please correct this.'));
-        Drupal::logger('emailservice')->error($e->getMessage());
+        \Drupal::logger('emailservice')->error($e->getMessage());
       }
     }
   }
+
 }

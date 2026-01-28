@@ -3,7 +3,6 @@
 namespace Drupal\emailservice\Plugin\QueueWorker;
 
 use Drupal\Component\Utility\Timer;
-use Drupal\Core\Annotation\QueueWorker;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
@@ -64,7 +63,7 @@ class NewsletterBuildAndSendQueue extends QueueWorkerBase implements ContainerFa
     $this->logger->get('emailservice.queue')
       ->notice('Processed nid: @nid in @time.', [
         '@nid' => $data->nid,
-        '@time' => Timer::read('emailservice_' . $data->nid) . 'ms'
+        '@time' => Timer::read('emailservice_' . $data->nid) . 'ms',
       ]);
   }
 

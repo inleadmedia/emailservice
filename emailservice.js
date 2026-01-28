@@ -28,10 +28,10 @@
 
         // Disabling subscription button by default.
         if (subscribe_button) {
-          subscribe_button.setAttribute('disabled', true);
+          subscribe_button.setAttribute('disabled', TRUE);
         }
         if (update_button) {
-          update_button.setAttribute('disabled', true);
+          update_button.setAttribute('disabled', TRUE);
         }
 
         // Check if there are already checked checkboxes.
@@ -65,7 +65,7 @@
               var HTTP = new XMLHttpRequest();
               var url = drupalSettings.path.baseUrl + 'check-subscriber';
               var params = 'email=' + encodeURIComponent(email) + '&mailinglist=' + encodeURIComponent(mailinglist);
-              HTTP.open('POST', url, true);
+              HTTP.open('POST', url, TRUE);
               HTTP.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
               HTTP.send(params);
 
@@ -140,7 +140,7 @@
             } else {
               // Clear all additional theming.
               if (subscribe_button) {
-                subscribe_button.setAttribute('disabled', true);
+                subscribe_button.setAttribute('disabled', TRUE);
               }
               email_address.classList.add('is-invalid');
             }

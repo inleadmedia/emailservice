@@ -3,7 +3,6 @@
 namespace Drupal\emailservice\Form;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\emailservice\Controller\SubscriptionManagerController;
 use Drupal\emailservice\Helpers\PreferencesSetHelper;
 use Drupal\emailservice\PeytzmailConnect;
 use Drupal\node\NodeForm;

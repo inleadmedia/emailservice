@@ -28,7 +28,7 @@ class SaltWidgetType extends WidgetBase {
 
     $element['value'] = $element + [
       '#type' => 'textfield',
-      '#default_value' => isset($items[$delta]->value) ? $items[$delta]->value : '1234',
+      '#default_value' => $items[$delta]->value ?? '1234',
       '#prefix' => '<div id="emailservice_salt_field">',
       '#suffix' => '</div>',
     ];
