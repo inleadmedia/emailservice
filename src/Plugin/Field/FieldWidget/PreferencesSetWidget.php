@@ -70,6 +70,8 @@ class PreferencesSetWidget extends WidgetBase {
       '#type' => 'textarea',
       '#title' => t('CQL Query'),
       '#default_value' => $item->cql_query ?? NULL,
+      // Store original value to detect changes
+      '#original_value' => $item->cql_query ?? NULL,
       '#element_validate' => [
         [static::class, 'validate'],
       ],
@@ -103,32 +105,47 @@ class PreferencesSetWidget extends WidgetBase {
    */
   public static function validate($element, FormStateInterface $form_state) {
     $cql_query = $element['#value'];
+    $original_value = $element['#original_value'] ?? NULL;
     $alias = $form_state->get('municipality_alias');
+    $delta = $element['#parents'][1] ?? 'unknown';
 
-    if (!empty($cql_query)) {
-      $cache = \Drupal::cache()->get('cql_validate.' . sha1($cql_query));
-      if (!empty($cache) && $cache->valid == TRUE) {
-        return;
-      }
+    // Skip validation if there's no CQL query to validate.
+    if (empty($cql_query)) {
+      return;
+    }
 
-      $url = \Drupal::config('emailservice.lms')->get('lms_api_url');
+    // Skip validation if the item is being removed (empty label).
+    $categories_field = $form_state->getValue('field_types_categories');
+    if (empty($categories_field[$delta]['label'])) {
+      return;
+    }
 
-      $delta = $element['#parents'][1];
-      $categories_field = $form_state->getValue('field_types_categories');
-      $material_tid = $categories_field[$delta]['material_tid'];
-      $type = Term::load($material_tid)->get('field_types_cql_query')->value;
+    // Skip validation if the CQL query hasn't changed.
+    if ($cql_query === $original_value) {
+      return;
+    }
 
-      $query = "/search?query=(($type) AND ($cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
-      $uri = $url . $alias . $query;
-      try {
-        $request = new Client();
-        $request->get($uri);
-        \Drupal::cache()->set('cql_validate.' . sha1($cql_query), 'valid');
-      }
-      catch (\Exception $e) {
-        $form_state->setError($element, t('There are errors in search string. Please correct this.'));
-        \Drupal::logger('emailservice')->error($e->getMessage());
-      }
+    // Check cache first.
+    $cache = \Drupal::cache()->get('cql_validate.' . sha1($cql_query));
+    if (!empty($cache) && $cache->data == 'valid') {
+      return;
+    }
+
+    $url = \Drupal::config('emailservice.lms')->get('lms_api_url');
+
+    $material_tid = $categories_field[$delta]['material_tid'];
+    $type = Term::load($material_tid)->get('field_types_cql_query')->value;
+
+    $query = "/search?query=(($type) AND ($cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
+    $uri = $url . $alias . $query;
+    try {
+      $request = new Client();
+      $request->get($uri);
+      \Drupal::cache()->set('cql_validate.' . sha1($cql_query), 'valid');
+    }
+    catch (\Exception $e) {
+      $form_state->setError($element, t('There are errors in search string. Please correct this.'));
+      \Drupal::logger('emailservice')->error($e->getMessage());
     }
   }
 
