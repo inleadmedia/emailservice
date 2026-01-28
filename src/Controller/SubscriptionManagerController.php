@@ -2,7 +2,6 @@
 
 namespace Drupal\emailservice\Controller;
 
-use Drupal;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\ReplaceCommand;
@@ -14,7 +13,6 @@ use Drupal\emailservice\Services\LmsRequestService;
 use Drupal\node\Entity\Node;
 use Egulias\EmailValidator\EmailValidator;
 use Egulias\EmailValidator\Validation\RFCValidation;
-use Exception;
 use Psr\Log\LogLevel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,22 +23,29 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SubscriptionManagerController extends ControllerBase {
 
+
   private $newsletter;
 
   /**
-   * @var LmsRequestService
+   * @var \Drupal\emailservice\Services\LmsRequestService
    */
   protected $lms;
 
   /**
-   * @var Node
+   * @var \Drupal\node\Entity\Node
    */
   protected $node;
 
+  /**
+   *
+   */
   public function __construct(LmsRequestService $lms) {
     $this->lms = $lms;
   }
 
+  /**
+   *
+   */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('emailservice.lms')
@@ -81,7 +86,7 @@ class SubscriptionManagerController extends ControllerBase {
    * @param array|null $data
    *   Newsletter data.
    *
-   * @return \stdClass
+   * @return object
    *   Feed object.
    */
   private function prepareFeed(string $title, string $preheader, ?array $data = NULL) {
@@ -120,7 +125,12 @@ class SubscriptionManagerController extends ControllerBase {
       $alias = $owner->get('field_alias')->getString();
       $itemUrl = $this->node->get('field_url_for_item_page')->value;
 
-      $this->newsletter = $this->lms->lmsRequest($nid, $alias, $itemUrl);
+      $limit = $this->node->get('field_materials_count')->value;
+      if (empty($limit)) {
+        $limit = LmsRequestService::MATERIAL_COUNT_DEFAULT;
+      }
+
+      $this->newsletter = $this->lms->lmsRequest($nid, $alias, $itemUrl, $limit);
 
       if (!empty($this->newsletter)) {
         $this->prepareNewsletter();
@@ -148,13 +158,13 @@ class SubscriptionManagerController extends ControllerBase {
 
         // Log detailed warning into dblog.
         $context['uid'] = (int) $owner->id();
-        Drupal::service('emailservice.logger')->log(LogLevel::WARNING, $content, $context);
+        \Drupal::service('emailservice.logger')->log(LogLevel::WARNING, $content, $context);
       }
     }
-    catch (Exception $exception) {
-      Drupal::logger('emailservice')
+    catch (\Exception $exception) {
+      \Drupal::logger('emailservice')
         ->error($exception->getMessage());
-      Drupal::messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
+      \Drupal::messenger()->addError($this->t('@exception_message', ['@exception_message' => $exception->getMessage()]));
     }
 
     return [
@@ -175,7 +185,7 @@ class SubscriptionManagerController extends ControllerBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   private function checkMunicipalityParam($param) {
-    $users = Drupal::entityTypeManager()
+    $users = \Drupal::entityTypeManager()
       ->getStorage('user')
       ->loadByProperties([
         'field_alias' => $param,
@@ -199,8 +209,8 @@ class SubscriptionManagerController extends ControllerBase {
     $email_parameter = '';
     $cs_parameter = '';
 
-    $municipality = Drupal::request()->get('municipality');
-    $params = Drupal::request()->query->all();
+    $municipality = \Drupal::request()->get('municipality');
+    $params = \Drupal::request()->query->all();
     $params['municipality'] = $municipality;
     if (!empty($params['email'])) {
       $email_parameter = $params['email'];
@@ -274,9 +284,9 @@ class SubscriptionManagerController extends ControllerBase {
           }
         }
 
-        $form = Drupal::formBuilder()
+        $form = \Drupal::formBuilder()
           ->getForm('\Drupal\emailservice\Form\EmailserviceSubscriberForm', $return['#subscriber_info'], $node);
-        $form = Drupal::service('renderer')->renderRoot($form);
+        $form = \Drupal::service('renderer')->renderRoot($form);
         $return['#form'] = $form;
 
         $return += [
@@ -288,7 +298,6 @@ class SubscriptionManagerController extends ControllerBase {
     $rendered = Drupal::service('renderer')->render($return);
     return new Response($rendered);
   }
-
 
   /**
    * Generate salt.
@@ -302,16 +311,16 @@ class SubscriptionManagerController extends ControllerBase {
   public function generateSalt() {
     $response = new AjaxResponse();
 
-    $values = array('type' => 'subscription');
+    $values = ['type' => 'subscription'];
 
-    $node = Drupal::entityTypeManager()
+    $node = \Drupal::entityTypeManager()
       ->getStorage('node')
       ->create($values);
 
-    $form = Drupal::entityTypeManager()
+    $form = \Drupal::entityTypeManager()
       ->getFormObject('node', 'default')
       ->setEntity($node);
-    $form = Drupal::formBuilder()->getForm($form);
+    $form = \Drupal::formBuilder()->getForm($form);
 
     $value = bin2hex(random_bytes(24));
     $element = $form["field_shared_secret_key"];
@@ -328,8 +337,8 @@ class SubscriptionManagerController extends ControllerBase {
   public static function checkSubscriber() {
     $response = NULL;
     $existing = FALSE;
-    $possible_email = Drupal::request()->get('email');
-    $mailinglist = Drupal::request()->get('mailinglist');
+    $possible_email = \Drupal::request()->get('email');
+    $mailinglist = \Drupal::request()->get('mailinglist');
 
     $valid = FALSE;
 
@@ -337,7 +346,7 @@ class SubscriptionManagerController extends ControllerBase {
       $validator = new EmailValidator();
       $valid = $validator->isValid($possible_email, new RFCValidation());
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       print $e->getMessage();
     }
 
@@ -397,4 +406,5 @@ class SubscriptionManagerController extends ControllerBase {
 
     return $title . ' - ' . $this->t('Week @week', ['@week' => $week->format('W')]);
   }
+
 }
