@@ -233,3 +233,28 @@ function emailservice_update_8005(&$sandbox) {
 //     \Drupal::logger('emailservice')->notice('Migrated LMS configuration from lms.config to emailservice.lms');
 //   }
 // }
+
+/**
+ * Add primary key to emailservice_preferences_mapping table if missing.
+ */
+function emailservice_update_8007() {
+  $schema = \Drupal::database()->schema();
+  $table_name = 'emailservice_preferences_mapping';
+  
+  // Check if the table exists.
+  if ($schema->tableExists($table_name)) {
+    // Check if primary key already exists by trying to find it.
+    // If it doesn't exist, add it.
+    try {
+      // Drop the primary key if it exists (to avoid errors).
+      $schema->dropPrimaryKey($table_name);
+    } catch (Exception $e) {
+      // Primary key doesn't exist, which is expected.
+    }
+    
+    // Add the primary key.
+    $schema->addPrimaryKey($table_name, ['id']);
+    
+    \Drupal::logger('emailservice')->notice('Added primary key to emailservice_preferences_mapping table.');
+  }
+}
