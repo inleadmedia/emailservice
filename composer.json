@@ -1,6 +1,9 @@
 {
     "name": "inlead/emailservice",
-    "description": "D8 module for communication between subscribers and PeytzMail",
+    "description": "Drupal module for communication between subscribers and PeytzMail",
     "type": "drupal-custom-module",
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "require": {
+        "drupal/core": "^9 || ^10 || ^11"
+    }
 }

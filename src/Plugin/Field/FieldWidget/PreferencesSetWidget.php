@@ -113,7 +113,7 @@ class PreferencesSetWidget extends WidgetBase {
         return;
       }
 
-      $url = Drupal::config('lms.config')->get('lms_api_url');
+      $url = Drupal::config('emailservice.lms')->get('lms_api_url');
 
       $delta = $element['#parents'][1];
       $categories_field= $form_state->getValue('field_types_categories');

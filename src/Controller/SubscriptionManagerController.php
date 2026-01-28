@@ -78,13 +78,13 @@ class SubscriptionManagerController extends ControllerBase {
    *   Newsletter title.
    * @param string $preheader
    *   Newsletter preheader.
-   * @param array $data
+   * @param array|null $data
    *   Newsletter data.
    *
    * @return \stdClass
    *   Feed object.
    */
-  private function prepareFeed(string $title, string $preheader, array $data = NULL) {
+  private function prepareFeed(string $title, string $preheader, ?array $data = NULL) {
     $object = new \stdClass();
     $object->name = 'pushed_arrivals';
     $object->data = $data;
@@ -226,6 +226,7 @@ class SubscriptionManagerController extends ControllerBase {
     }
     if (!empty($valid_user)) {
       $nids = Drupal::entityQuery('node')
+        ->accessCheck(FALSE)
         ->condition('status', 1)
         ->condition('uid', $valid_user->id())
         ->execute();
@@ -285,7 +286,7 @@ class SubscriptionManagerController extends ControllerBase {
       }
     }
     $rendered = Drupal::service('renderer')->render($return);
-    return Response::create($rendered);
+    return new Response($rendered);
   }
 
 
@@ -378,7 +379,7 @@ class SubscriptionManagerController extends ControllerBase {
       ];
     }
 
-    return JsonResponse::create($response);
+    return new JsonResponse($response);
   }
 
   /**

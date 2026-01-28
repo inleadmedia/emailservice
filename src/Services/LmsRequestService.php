@@ -58,7 +58,7 @@ class LmsRequestService {
     $this->connection = $connection;
     $this->client = $client;
 
-    $lmsConfig = $this->config->get('lms.config');
+    $lmsConfig = $this->config->get('emailservice.lms');
     $this->lmsServiceURL = $lmsConfig->get('lms_api_url');
     $this->coversServiceURL = $lmsConfig->get('lms_covers_api_url');
   }
