@@ -5,6 +5,7 @@ namespace Drupal\emailservice\Plugin\Field\FieldWidget;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\emailservice\Services\LmsRequestService;
 use Drupal\taxonomy\Entity\Term;
 use GuzzleHttp\Client;
 
@@ -136,7 +137,17 @@ class PreferencesSetWidget extends WidgetBase {
     $material_tid = $categories_field[$delta]['material_tid'];
     $type = Term::load($material_tid)->get('field_types_cql_query')->value;
 
-    $query = "/search?query=(($type) AND ($cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=200";
+    // Get materials count from the node, or use default.
+    $materials_count = LmsRequestService::MATERIAL_COUNT_DEFAULT;
+    $build_info = $form_state->getBuildInfo();
+    if (isset($build_info['callback_object'])) {
+      $node = $build_info['callback_object']->getEntity();
+      if ($node && $node->hasField('field_materials_count') && !$node->get('field_materials_count')->isEmpty()) {
+        $materials_count = $node->get('field_materials_count')->value;
+      }
+    }
+
+    $query = "/search?query=(($type) AND ($cql_query)) AND term.acSource=\"bibliotekskatalog\" AND holdingsitem.accessionDate>=\"NOW-7DAYS\"&step=" . $materials_count;
     $uri = $url . $alias . $query;
     try {
       $request = new Client();

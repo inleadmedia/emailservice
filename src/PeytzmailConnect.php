@@ -42,7 +42,7 @@ class PeytzmailConnect {
       'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
     ];
 
-    $uri = '/api/v1/subscribers/search.json?criteria[email]=' . $email;
+    $uri = '/api/v1/subscribers/search.json?criteria[email]=' . urlencode($email);
     $result = '';
 
     try {
