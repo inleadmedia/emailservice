@@ -145,6 +145,16 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
     // Hide materials count field for non-administrators.
     $form['field_materials_count']['#access'] = in_array('administrator', \Drupal::currentUser()->getRoles());
 
+    // Make label (etiket) field read-only within field_types_categories.
+    if (isset($form['field_types_categories']['widget'])) {
+      foreach ($form['field_types_categories']['widget'] as $delta => &$element) {
+        if (is_numeric($delta) && isset($element['label'])) {
+          $element['label']['#disabled'] = TRUE;
+          $element['label']['#description'] = t('This field is read-only and cannot be edited.');
+        }
+      }
+    }
+
     $form_state->setFormState([
       'municipality_alias' => $alias,
     ]);
