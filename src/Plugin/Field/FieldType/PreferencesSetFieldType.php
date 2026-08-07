@@ -108,8 +108,12 @@ class PreferencesSetFieldType extends FieldItemBase {
 
     foreach ($fields as $field) {
       $value = $this->get($field)->getValue();
-      return $value === NULL || $value === '';
+      if ($value !== NULL && $value !== '') {
+        return FALSE;
+      }
     }
+    
+    return TRUE;
   }
 
   /**
