@@ -60,11 +60,14 @@ class PreferencesSetWidget extends WidgetBase {
       '#type' => 'textfield',
       '#title' => t('Label'),
       '#default_value' => $item->label ?? NULL,
+      // Make label readonly if it already exists (editing existing item).
+      '#disabled' => !empty($item->label),
+      '#attributes' => !empty($item->label) ? ['readonly' => 'readonly'] : [],
     ];
 
     $element['machine_name'] = [
       '#type' => 'hidden',
-      '#value' => $item->machine_name ?? 'stub',
+      '#value' => $item->machine_name ?? NULL,
     ];
 
     $element['cql_query'] = [
@@ -80,7 +83,7 @@ class PreferencesSetWidget extends WidgetBase {
 
     $element['status'] = [
       '#type' => 'hidden',
-      '#default_value' => $item->status ?? 1,
+      '#default_value' => $item->status ?? NULL,
     ];
 
     $options = [];
@@ -95,7 +98,8 @@ class PreferencesSetWidget extends WidgetBase {
       '#title' => t('Related material type'),
       '#empty_option' => t('Choose type'),
       '#options' => $options,
-      '#default_value' => $item->material_tid ?? '',
+      '#default_value' => $item->material_tid ?? NULL,
+      '#required' => FALSE,
     ];
 
     return $element;

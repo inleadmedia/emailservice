@@ -114,13 +114,18 @@ function emailservice_preprocess_subscription_manager(&$variables) {
  */
 function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   if ($form_id == 'taxonomy_term_types_materials_form') {
-    // Disable "name" field on term edit.
-    if (!is_null($form['tid']['#value'])) {
-      $form["name"]["#description_display"] = 'after';
-      $form['name']['widget'][0]['value']['#description'] = t("The editing of term name is not allowed. If you want to use customized label for this term please use the <a href='@custom-labels'>Material Items Label Mapping</a>", [
-        '@custom-labels' => '/admin/config/emailservice/material-types-labels',
-      ]);
+    // Make "name" field readonly on term edit (not on create).
+    if (isset($form['tid']['#value']) && !empty($form['tid']['#value'])) {
+      // Make the field disabled and readonly.
       $form['name']['#disabled'] = TRUE;
+      
+      if (isset($form['name']['widget'][0]['value'])) {
+        $form['name']['widget'][0]['value']['#disabled'] = TRUE;
+        $form['name']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
+        $form['name']['widget'][0]['value']['#description'] = t("The editing of term name is not allowed. If you want to use customized label for this term please use the <a href='@custom-labels'>Material Items Label Mapping</a>", [
+          '@custom-labels' => '/admin/config/emailservice/material-types-labels',
+        ]);
+      }
     }
 
     // Temporarily disabled LMS validation/sync on taxonomy term save.
