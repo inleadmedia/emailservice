@@ -111,7 +111,11 @@ class PreferencesSetWidget extends WidgetBase {
     $delta = $element['#parents'][1] ?? 'unknown';
 
     // Skip validation on local/development environments
-    if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'ddev.site') !== FALSE) {
+    if (isset($_SERVER['HTTP_HOST']) && (
+      strpos($_SERVER['HTTP_HOST'], 'ddev.site') !== FALSE ||
+      strpos($_SERVER['HTTP_HOST'], '.stg.') !== FALSE ||
+      strpos($_SERVER['HTTP_HOST'], 'staging') !== FALSE
+    )) {
       return;
     }
 
