@@ -123,11 +123,15 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
       $form['name']['#disabled'] = TRUE;
     }
 
+    // Temporarily disabled LMS validation/sync on taxonomy term save.
+    // This was causing errors when saving terms with CQL queries.
+    /*
     foreach (array_keys($form['actions']) as $action) {
       if ($action != 'delete' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
         $form['actions']['submit']['#submit'][] = 'emailservice_type_terms_send';
       }
     }
+    */
   }
 
   if ($form_id == 'node_subscription_edit_form' || $form_id == "node_subscription_form") {
@@ -144,16 +148,6 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
 
     // Hide materials count field for non-administrators.
     $form['field_materials_count']['#access'] = in_array('administrator', \Drupal::currentUser()->getRoles());
-
-    // Make label (etiket) field read-only within field_types_categories.
-    if (isset($form['field_types_categories']['widget'])) {
-      foreach ($form['field_types_categories']['widget'] as $delta => &$element) {
-        if (is_numeric($delta) && isset($element['label'])) {
-          $element['label']['#disabled'] = TRUE;
-          $element['label']['#description'] = t('This field is read-only and cannot be edited.');
-        }
-      }
-    }
 
     $form_state->setFormState([
       'municipality_alias' => $alias,

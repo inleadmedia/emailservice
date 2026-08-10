@@ -110,6 +110,11 @@ class PreferencesSetWidget extends WidgetBase {
     $alias = $form_state->get('municipality_alias');
     $delta = $element['#parents'][1] ?? 'unknown';
 
+    // Skip validation on local/development environments
+    if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'ddev.site') !== FALSE) {
+      return;
+    }
+
     // Skip validation if there's no CQL query to validate.
     if (empty($cql_query)) {
       return;
