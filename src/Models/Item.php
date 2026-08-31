@@ -2,6 +2,9 @@
 
 namespace Drupal\emailservice\Models;
 
+/**
+ *
+ */
 class Item {
 
   public $identifier;

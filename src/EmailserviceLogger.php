@@ -6,7 +6,7 @@ use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\user\Entity\User;
 
 /**
- * Class EmailserviceLogger
+ * Class EmailserviceLogger.
  *
  * @package Drupal\emailservice
  */

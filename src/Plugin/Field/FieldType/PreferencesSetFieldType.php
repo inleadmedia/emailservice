@@ -6,7 +6,6 @@ use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
-use Drupal\emailservice\Controller\SubscriptionManagerController;
 use Drupal\emailservice\Helpers\PreferencesSetHelper;
 
 /**
@@ -109,8 +108,12 @@ class PreferencesSetFieldType extends FieldItemBase {
 
     foreach ($fields as $field) {
       $value = $this->get($field)->getValue();
-      return $value === NULL || $value === '';
+      if ($value !== NULL && $value !== '') {
+        return FALSE;
+      }
     }
+    
+    return TRUE;
   }
 
   /**

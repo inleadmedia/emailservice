@@ -5,16 +5,20 @@
  * Emailservice module functionality.
  */
 
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\node\NodeInterface;
+use Drupal\Core\Render\Element\StatusMessages;
+use Drupal\file\Entity\File;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultForbidden;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageInterface;
-use Drupal\Core\Path\AliasStorage;
 use Drupal\emailservice\PeytzmailConnect;
+use Drupal\path_alias\Entity\PathAlias;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ViewExecutable;
-use Drupal\emailservice\Controller\SubscriptionManagerController;
 
 /**
  * Implements hook_theme().
@@ -39,6 +43,10 @@ function emailservice_theme($existing, $type, $theme, $path) {
       'template' => 'emailservice-form',
       'render element' => 'form',
     ],
+    'fieldset__emailservice' => [
+      'base hook' => 'fieldset',
+      'template' => 'fieldset--emailservice',
+    ],
   ];
 }
 
@@ -50,14 +58,14 @@ function emailservice_preprocess_subscription_manager(&$variables) {
   if (!empty($variables['node'])) {
     $node = $variables['node'];
 
-    $variables['emailservice_path'] = $base_url . '/' . drupal_get_path('module', 'emailservice');
+    $variables['emailservice_path'] = $base_url . '/' . \Drupal::service('extension.list.module')->getPath('emailservice');
 
     $title = $node->getTitle();
     $variables['title'] = $title;
 
     // Process logo output.
     $logo_array = $node->get('field_logo')->target_id;
-    $file = \Drupal\file\Entity\File::load($logo_array);
+    $file = File::load($logo_array);
     $logo = [
       '#theme' => 'image_style',
       '#style_name' => 'medium',
@@ -93,7 +101,7 @@ function emailservice_preprocess_subscription_manager(&$variables) {
 
     $variables['headline_color'] = $node->get('field_headline_color')->color;
 
-    $messages = \Drupal\Core\Render\Element\StatusMessages::renderMessages();
+    $messages = StatusMessages::renderMessages();
     if (!empty($messages)) {
       $messages['#theme'] = 'emailservice_status_messages';
       $variables['messages'] = \Drupal::service('renderer')->render($messages);
@@ -106,20 +114,29 @@ function emailservice_preprocess_subscription_manager(&$variables) {
  */
 function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   if ($form_id == 'taxonomy_term_types_materials_form') {
-    // Disable "name" field on term edit.
-    if (!is_null($form['tid']['#value'])) {
-      $form["name"]["#description_display"] = 'after';
-      $form['name']['widget'][0]['value']['#description'] = t("The editing of term name is not allowed. If you want to use customized label for this term please use the <a href='@custom-labels'>Material Items Label Mapping</a>", [
-        '@custom-labels' => '/admin/config/emailservice/material-types-labels',
-      ]);
+    // Make "name" field readonly on term edit (not on create).
+    if (isset($form['tid']['#value']) && !empty($form['tid']['#value'])) {
+      // Make the field disabled and readonly.
       $form['name']['#disabled'] = TRUE;
+      
+      if (isset($form['name']['widget'][0]['value'])) {
+        $form['name']['widget'][0]['value']['#disabled'] = TRUE;
+        $form['name']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
+        $form['name']['widget'][0]['value']['#description'] = t("The editing of term name is not allowed. If you want to use customized label for this term please use the <a href='@custom-labels'>Material Items Label Mapping</a>", [
+          '@custom-labels' => '/admin/config/emailservice/material-types-labels',
+        ]);
+      }
     }
 
+    // Temporarily disabled LMS validation/sync on taxonomy term save.
+    // This was causing errors when saving terms with CQL queries.
+    /*
     foreach (array_keys($form['actions']) as $action) {
       if ($action != 'delete' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
         $form['actions']['submit']['#submit'][] = 'emailservice_type_terms_send';
       }
     }
+    */
   }
 
   if ($form_id == 'node_subscription_edit_form' || $form_id == "node_subscription_form") {
@@ -134,12 +151,18 @@ function emailservice_form_alter(&$form, FormStateInterface $form_state, $form_i
       $alias = $entity->getOwner()->get('field_alias')->value;
     }
 
+    // Hide materials count field for non-administrators.
+    $form['field_materials_count']['#access'] = in_array('administrator', \Drupal::currentUser()->getRoles());
+
     $form_state->setFormState([
       'municipality_alias' => $alias,
     ]);
   }
 }
 
+/**
+ *
+ */
 function emailservice_type_terms_send(&$form, FormStateInterface $formState) {
   $connect = new PeytzmailConnect();
   $remote_field_data = $connect->getSubscriberFieldsData('new_arrivals_types');
@@ -186,7 +209,7 @@ function emailservice_views_query_alter(ViewExecutable $view, QueryPluginBase $q
 /**
  * Implements hook_node_access().
  */
-function emailservice_node_access(\Drupal\node\NodeInterface $node, $op, \Drupal\Core\Session\AccountInterface $account) {
+function emailservice_node_access(NodeInterface $node, $op, AccountInterface $account) {
   switch ($op) {
     case 'view':
     case 'update':
@@ -203,7 +226,8 @@ function emailservice_node_access(\Drupal\node\NodeInterface $node, $op, \Drupal
       $access = new AccessResultForbidden();
       $access->addCacheableDependency($node);
       return $access;
-      break;
+
+    break;
   }
 }
 
@@ -230,11 +254,14 @@ function emailservice_preprocess_fieldset(&$variables) {
 }
 
 /**
- * Implements hook_theme_registry_alter().
+ * Implements hook_theme_suggestions_fieldset_alter().
  */
-function emailservice_theme_registry_alter(&$theme_registry) {
-  $path = drupal_get_path('module', 'emailservice');
-  $theme_registry['fieldset']['path'] = $path . '/templates';
+function emailservice_theme_suggestions_fieldset_alter(array &$suggestions, array $variables) {
+  // Only apply custom fieldset template on the subscription manager route.
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if ($route_name === 'emailservice.subscription_manager') {
+    $suggestions[] = 'fieldset__emailservice';
+  }
 }
 
 /**
@@ -247,7 +274,7 @@ function emailservice_cron() {
   );
   $now = \Drupal::time()->getRequestTime();
   // One week.
-  $threshold = 60 * 60 * 24 * 7;
+  $threshold = (60 * 60 * 24 * 7) - 5;
   $is_monday = (int) (new \DateTime())->format('N') === 1;
 
   // Check if we're in debug/development mode.
@@ -263,12 +290,14 @@ function emailservice_cron() {
   if ($debug_mode) {
     \Drupal::logger('emailservice')
       ->notice('Email service newsletter schedule sendout commenced (debug mode - bypassing time/day restrictions).');
-  } else {
+  }
+  else {
     \Drupal::logger('emailservice')
       ->notice('Email service newsletter schedule sendout commenced.');
   }
 
   $nids = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
     ->condition('type', 'subscription')
     ->condition('status', 1)
     ->execute();
@@ -292,7 +321,7 @@ function emailservice_cron() {
   );
 }
 
-/*
+/**
  * Implements hook_ENTITY_TYPE_insert().
  *
  * Create node's path alias.
@@ -301,15 +330,15 @@ function emailservice_cron() {
  *
  * @throws \Exception
  */
-function emailservice_node_insert(Drupal\Core\Entity\EntityInterface $entity) {
+function emailservice_node_insert(EntityInterface $entity) {
   if ($entity->getType() == 'subscription') {
-    $alias_storage = new AliasStorage(Drupal::database(), \Drupal::moduleHandler());
     $author_alias = $entity->getOwner()->field_alias->value;
-    $alias_storage->save(
-      '/sm/' . $author_alias,
-      '/' . $author_alias,
-      LanguageInterface::LANGCODE_NOT_SPECIFIED
-    );
+    $path_alias = PathAlias::create([
+      'path' => '/sm/' . $author_alias,
+      'alias' => '/' . $author_alias,
+      'langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED,
+    ]);
+    $path_alias->save();
   }
 }
 
@@ -320,11 +349,15 @@ function emailservice_node_insert(Drupal\Core\Entity\EntityInterface $entity) {
  *
  * @param \Drupal\Core\Entity\EntityInterface $entity
  */
-function emailservice_node_delete(Drupal\Core\Entity\EntityInterface $entity) {
+function emailservice_node_delete(EntityInterface $entity) {
   if ($entity->getType() == 'subscription') {
-    $alias_storage = new AliasStorage(Drupal::database(), \Drupal::moduleHandler());
     $author_alias = $entity->getOwner()->field_alias->value;
-    $alias_storage->delete(['alias' => '/' . $author_alias]);
+    /** @var \Drupal\path_alias\PathAliasStorageInterface $path_alias_storage */
+    $path_alias_storage = \Drupal::entityTypeManager()->getStorage('path_alias');
+    $aliases = $path_alias_storage->loadByProperties(['alias' => '/' . $author_alias]);
+    foreach ($aliases as $alias) {
+      $alias->delete();
+    }
   }
 }
 
@@ -334,12 +367,12 @@ function emailservice_node_delete(Drupal\Core\Entity\EntityInterface $entity) {
 function emailservice_preprocess_input(&$variables) {
   if (isset($variables['attributes']['class'])) {
     if (is_object($variables['attributes']['class'])) {
-      if ( in_array( 'error', $variables['attributes']['class']->value() ) ) {
+      if (in_array('error', $variables['attributes']['class']->value())) {
         $variables['attributes']['class']->addClass('is-invalid');
       }
     }
     elseif (is_array($variables['attributes']['class'])) {
-      if ( in_array( 'error', $variables['attributes']['class'] ) ) {
+      if (in_array('error', $variables['attributes']['class'])) {
         $variables['attributes']['class'][] = 'is-invalid';
       }
     }
@@ -368,6 +401,20 @@ function emailservice_preprocess(&$variables, $hook) {
       if (count($variables['element']['#options']) > 20) {
         $variables['attributes']['class'][] = 'es-card-columns';
       }
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function emailservice_menu_local_tasks_alter(&$data, $route_name) {
+  // Only show "Send Newsletter" task link on subscription content type nodes.
+  if (isset($data['tabs'][0]['emailservice.send_newsletter'])) {
+    $node = \Drupal::routeMatch()->getParameter('node');
+
+    if (!$node instanceof NodeInterface || $node->bundle() !== 'subscription') {
+      unset($data['tabs'][0]['emailservice.send_newsletter']);
     }
   }
 }

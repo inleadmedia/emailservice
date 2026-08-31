@@ -46,7 +46,7 @@ class MaterialTypesMappingForm extends ConfigFormBase {
         '#type' => 'textfield',
         '#title' => t('Original label'),
         '#disabled' => TRUE,
-        '#default_value' => $term->name
+        '#default_value' => $term->name,
       ];
 
       $form['custom_labels'][$term->tid]['custom'] = [

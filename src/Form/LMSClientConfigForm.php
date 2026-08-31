@@ -5,6 +5,9 @@ namespace Drupal\emailservice\Form;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
+/**
+ *
+ */
 class LMSClientConfigForm extends ConfigFormBase {
 
   /**
@@ -19,7 +22,7 @@ class LMSClientConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'lms.config',
+      'emailservice.lms',
     ];
   }
 
@@ -27,7 +30,7 @@ class LMSClientConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = $this->config('lms.config');
+    $config = $this->config('emailservice.lms');
     $form['lms'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('LMS Configurations'),
@@ -55,7 +58,7 @@ class LMSClientConfigForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
 
-    $this->config('lms.config')
+    $this->config('emailservice.lms')
       ->set('lms_api_url', $form_state->getValue('lms_api_url'))
       ->set('lms_covers_api_url', $form_state->getValue('lms_covers_api_url'))
       ->save();

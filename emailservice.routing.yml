@@ -32,7 +32,21 @@ emailservice.newsletter:
     _controller: '\Drupal\emailservice\Controller\SubscriptionManagerController::sendNewsletter'
     _title: 'Send Newsletter'
   requirements:
-    _permission: 'access content'
+    _permission: 'trigger manual newsletter'
+
+emailservice.send_newsletter_form:
+  path: '/node/{node}/send-newsletter'
+  defaults:
+    _form: '\Drupal\emailservice\Form\SendNewsletterForm'
+    _title: 'Send Newsletter'
+  requirements:
+    _permission: 'trigger manual newsletter'
+    node: \d+
+  options:
+    _admin_route: TRUE
+    parameters:
+      node:
+        type: entity:node
 
 emailservice.generate_salt:
   path: '/generate-salt'
